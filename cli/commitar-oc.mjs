@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
 import { doctor, format } from "./doctor.mjs"
 import { exportHandoff } from "./handoff.mjs"
+import { addPersona } from "./personas.mjs"
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -56,8 +57,23 @@ function runHandoff(args) {
   console.log(`exported to ${r.out}`)
 }
 
+function runPersona(args) {
+  const [sub, ...a] = args
+  const flag = (n, d) => { const i = a.indexOf(`--${n}`); return i >= 0 ? a[i + 1] : d }
+  const slugs = a.filter((x, i) => !x.startsWith("--") && !(i > 0 && a[i - 1].startsWith("--") && a[i - 1] !== "--force"))
+  if (sub !== "add" || !slugs.length) { console.error("usage: commitar-oc persona add <slug...> [--model fast|strong] [--edit allow|ask|deny] [--bash allow|ask|deny] [--force]"); process.exit(1) }
+  for (const slug of slugs) {
+    try {
+      const r = addPersona({ source: resolve(flag("source", join(root, "dev/agency-agents"))), rolesDir: join(root, "protocol/roles"), slug,
+        model: flag("model", "fast"), edit: flag("edit", "deny"), bash: flag("bash", "ask"), force: a.includes("--force") })
+      console.log(`added ${r.target} (${r.original} -> ${r.chars} chars)`)
+    } catch (e) { console.error(e.message); process.exit(1) }
+  }
+}
+
 const [cmd, ...rest] = process.argv.slice(2)
 if (cmd === "init") init(resolve(rest[0] ?? "."))
 else if (cmd === "doctor") runDoctor(rest)
 else if (cmd === "handoff") runHandoff(rest)
-else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir]"); process.exit(cmd ? 1 : 0) }
+else if (cmd === "persona") runPersona(rest)
+else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | persona add <slug...>"); process.exit(cmd ? 1 : 0) }

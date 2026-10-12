@@ -68,3 +68,10 @@ and run in the background. HANDOFF.json passed the schema checks in tests.
 `protocol/handoff.schema.json`, adds `exportedAt` and `git` state, and writes `handoff.json` + `handoff.md`
 (with the spec inline) to `<dir>/.commitar/handoff/`. Paid commitar should consume `handoff.json`;
 the schema in `protocol/` is the contract (dependency points from HCP to the protocol).
+
+## Personas
+`commitar-oc persona add <division-slug...> [--model fast|strong] [--edit ...] [--bash ...] [--force]`
+copies a persona from the vendored `dev/agency-agents` into `protocol/roles/`, trimmed (keeps identity,
+mission, rules, workflow, checklist, communication; drops code samples, metrics, memory fluff), read-only by
+default, with a provenance comment (source file + catalog commit). The tracked copy is the source of truth;
+`dev/` is only needed when adding. `mega` gets an auto-generated roster of subagents.

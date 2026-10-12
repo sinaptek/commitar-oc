@@ -15,8 +15,8 @@ Full rationale: `docs/design-notes.md` (read it first).
 
 ## Current state
 - Only reference material exists. `.opencode/` is the old hand-edited config (Windows path,
-  claude-mem) kept as a reference for what the generator replaces. `skills/*.py` are prime-agent
-  functions: convert to OpenCode custom tools or drop.
+  claude-mem) kept as a reference for what the generator replaces. `skills/*.py` were dropped
+  (stubs; `gates` tool and bash cover them).
 - `dev/` (agency-agents, prime-agent) and `obsidian-second-brain/` are vendored sources, gitignored.
   Copy from them via the installer; never depend on their paths at runtime. Trim personas, don't load all.
 
