@@ -16,7 +16,7 @@ project's `commitar.json` and run by the generated `gates` tool, never decided b
 
 ## Quick start
 
-Needs Node 20+ and OpenCode (`npm i -g opencode-ai`). Default models are OpenCode's free ones: no key.
+Needs Node 24 (the version tested) and OpenCode (`npm i -g opencode-ai`). Default models are OpenCode's free ones: no key.
 
 ```bash
 node cli/commitar-oc.mjs init ~/my-project     # writes opencode.json, .opencode/, commitar.json; validates with OpenCode
@@ -74,4 +74,4 @@ Clone them into those paths to use the installers; generated projects never depe
 
 - RED only checks for a non-zero exit, so a test file that fails to load also passes RED; GREEN catches it.
 - The OpenCode adapter in obsidian-second-brain is marked deprecated upstream (works, may need replacing).
-- No CI yet. Run `npm test`.
+- CI (`.github/workflows/ci.yml`) is written but has never run: the repo has no remote yet. Locally: `npm test`.
