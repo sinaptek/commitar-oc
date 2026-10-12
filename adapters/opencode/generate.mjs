@@ -33,7 +33,7 @@ export function resolveModel(models, alias) {
   return id
 }
 
-export function generate({ models, roles }) {
+export function generate({ models, roles, vault = null }) {
   const primary = roles.find((r) => r.meta.mode === "primary")
   const config = {
     $schema: "https://opencode.ai/config.json",
@@ -45,8 +45,9 @@ export function generate({ models, roles }) {
   const files = { "opencode.json": JSON.stringify(config, null, 2) + "\n" }
   const specialists = roles.filter((r) => r.meta.mode === "subagent")
   const roster = `\n\n## Available subagents\n${specialists.map((r) => `- @${r.meta.name}: ${r.meta.description}`).join("\n")}`
+  const vaultNote = `\n\n## Knowledge vault\nAfter the SPEC gate passes, call the \`vault_save\` tool with kind "spec" and a short summary of the spec (goal, acceptance criteria, key decisions). The spec itself stays in the project and the handoff never depends on the vault: if \`vault_save\` reports an error, mention it and continue.`
   for (const { meta, body: rawBody } of roles) {
-    const body = meta.mode === "primary" ? rawBody + roster : rawBody
+    const body = meta.mode === "primary" ? rawBody + roster + (vault ? vaultNote : "") : rawBody
     const perm = Object.entries(meta.permission ?? {}).map(([k, v]) => `  ${k}: ${v}`).join("\n")
     files[`.opencode/agents/${meta.name}.md`] =
       `---\ndescription: ${JSON.stringify(meta.description)}\nmode: ${meta.mode}\nmodel: ${resolveModel(models, meta.model)}\n` +
@@ -55,5 +56,9 @@ export function generate({ models, roles }) {
   }
   files[".opencode/lib/gates-core.mjs"] = readFileSync(join(templates, "gates-core.mjs"), "utf8")
   files[".opencode/tools/gates.ts"] = readFileSync(join(templates, "gates.ts"), "utf8")
+  if (vault) {
+    files[".opencode/lib/vault-core.mjs"] = readFileSync(join(templates, "vault-core.mjs"), "utf8")
+    files[".opencode/tools/vault_save.ts"] = readFileSync(join(templates, "vault.ts"), "utf8").replace("__VAULT_PATH__", JSON.stringify(vault.path))
+  }
   return files
 }

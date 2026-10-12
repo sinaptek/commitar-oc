@@ -8,8 +8,14 @@ import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
 import { doctor, format } from "./doctor.mjs"
 import { exportHandoff } from "./handoff.mjs"
 import { addPersona } from "./personas.mjs"
+import { initVault } from "./vault.mjs"
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+
+export function loadVaultConfig() {
+  const p = join(root, "vault.json")
+  return existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : null
+}
 
 export function validate(dir) {
   const r = spawnSync("opencode", ["debug", "config"], { cwd: dir, encoding: "utf8" })
@@ -19,7 +25,7 @@ export function validate(dir) {
 
 function init(target) {
   const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
-  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")) })
+  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")), vault: loadVaultConfig() })
   for (const [rel, content] of Object.entries(files)) {
     const path = join(target, rel)
     mkdirSync(dirname(path), { recursive: true })
@@ -40,7 +46,7 @@ function runDoctor(args) {
   const smoke = !args.includes("--no-smoke")
   const dir = resolve(args.find((a) => !a.startsWith("--")) ?? ".")
   const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
-  const results = doctor({ dir, models, smoke })
+  const results = doctor({ dir, models, smoke, vault: loadVaultConfig() })
   console.log(format(results))
   process.exit(results.every((r) => r.ok) ? 0 : 1)
 }
@@ -71,9 +77,17 @@ function runPersona(args) {
   }
 }
 
+function runVault(args) {
+  const config = loadVaultConfig()
+  if (args[0] !== "init" || !config) { console.error(config ? "usage: commitar-oc vault init" : "no vault.json: vault features are disabled"); process.exit(1) }
+  try { initVault({ config, source: join(root, "obsidian-second-brain") }).forEach((x) => console.log(x)); console.log(`vault ready at ${config.path}`) }
+  catch (e) { console.error(e.message); process.exit(1) }
+}
+
 const [cmd, ...rest] = process.argv.slice(2)
 if (cmd === "init") init(resolve(rest[0] ?? "."))
 else if (cmd === "doctor") runDoctor(rest)
 else if (cmd === "handoff") runHandoff(rest)
 else if (cmd === "persona") runPersona(rest)
-else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | persona add <slug...>"); process.exit(cmd ? 1 : 0) }
+else if (cmd === "vault") runVault(rest)
+else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | persona add <slug...> | vault init"); process.exit(cmd ? 1 : 0) }

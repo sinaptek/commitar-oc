@@ -1,0 +1,7 @@
+{
+  "_note": "Shared knowledge vault (separate from every project). Delete this file to disable vault features. `commands` is the obsidian-second-brain subset installed by `commitar-oc vault init`.",
+  "path": "/home/commitar/sinaptek/vault",
+  "owner": "Sinaptek",
+  "preset": "builder",
+  "commands": ["obsidian-capture", "obsidian-save", "obsidian-find", "obsidian-project", "obsidian-decide", "obsidian-recap"]
+}

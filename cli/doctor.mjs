@@ -16,7 +16,7 @@ export function defaultRun(cmd, args, { cwd, timeout = 30000 } = {}) {
 const pass = (name, detail = "") => ({ name, ok: true, detail })
 const fail = (name, detail) => ({ name, ok: false, detail })
 
-export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeoutMs = 60000 }) {
+export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeoutMs = 60000, vault = null }) {
   const results = []
 
   const v = run("opencode", ["--version"])
@@ -46,6 +46,13 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
       s.ok && /\bok\b/i.test(s.out) ? pass(`alias ${alias}`, `${id} answered in ${secs}s`)
         : fail(`alias ${alias}`, s.timedOut ? `${id} timed out after ${smokeTimeoutMs / 1000}s (free models can stall)` : `${id}: ${s.out.slice(-200)}`),
     )
+  }
+
+  if (vault) {
+    const ok = existsSync(join(vault.path, "_CLAUDE.md"))
+    let writable = false
+    try { accessSync(vault.path, constants.W_OK); writable = true } catch {}
+    results.push(ok && writable ? pass("vault", vault.path) : fail("vault", `${vault.path} ${ok ? "is not writable by this user" : "is not an initialized vault; run: commitar-oc vault init"}`))
   }
 
   if (models.proxy) {

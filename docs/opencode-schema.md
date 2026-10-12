@@ -75,3 +75,17 @@ copies a persona from the vendored `dev/agency-agents` into `protocol/roles/`, t
 mission, rules, workflow, checklist, communication; drops code samples, metrics, memory fluff), read-only by
 default, with a provenance comment (source file + catalog commit). The tracked copy is the source of truth;
 `dev/` is only needed when adding. `mega` gets an auto-generated roster of subagents.
+
+## Vault
+Shared knowledge vault at the path in `vault.json` (currently `/home/commitar/sinaptek/vault`), separate from every
+project. `commitar-oc vault init` bootstraps it (builder preset, via vendored obsidian-second-brain) and installs
+only the subset of commands listed in `vault.json` through the vendored OpenCode adapter (AGENTS.md ~6 KB for 6
+commands; the full set is 47). It never touches an existing non-empty directory that is not a vault.
+Access: the vault dir carries a default ACL for group `sinaptek`, so both users can write.
+
+Specs stay in the project; the handoff never depends on the vault. When `vault.json` exists, `init` also generates a
+`vault_save` tool (kind `spec` or `devlog`) and tells `mega` to call it after the SPEC gate passes. The tool writes the
+AI-first frontmatter and `## For future agent` preamble itself, converts banned unicode to ASCII, refuses text that
+looks like a secret, overwrites the previous spec note for the same project, and returns an error string instead of
+throwing so the pipeline is not blocked. Delete `vault.json` to turn all of this off.
+The vault's own commands (/obsidian-find, /obsidian-recap, ...) are used by opening OpenCode inside the vault dir.
