@@ -2,22 +2,101 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "commitar HANDOFF",
   "type": "object",
-  "required": ["version", "project", "phase", "status"],
+  "required": [
+    "version",
+    "project",
+    "phase",
+    "status"
+  ],
   "properties": {
-    "version": { "const": 1 },
-    "project": { "type": "string" },
-    "spec": { "type": "string", "description": "Path to the spec in the vault" },
-    "phase": { "enum": ["SPEC", "RED", "GREEN", "AUDIT", "COMMIT"] },
-    "status": { "enum": ["pending", "in_progress", "gate_failed", "done"] },
+    "version": {
+      "const": 1
+    },
+    "project": {
+      "type": "string"
+    },
+    "spec": {
+      "type": "string",
+      "description": "Path to the spec in the vault"
+    },
+    "phase": {
+      "enum": [
+        "SPEC",
+        "RED",
+        "GREEN",
+        "AUDIT",
+        "COMMIT"
+      ]
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "in_progress",
+        "gate_failed",
+        "done"
+      ]
+    },
     "gates": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["command", "passed"],
-        "properties": { "command": { "type": "string" }, "passed": { "type": "boolean" }, "output": { "type": "string" } }
+        "required": [
+          "command",
+          "passed"
+        ],
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "output": {
+            "type": "string"
+          }
+        }
       }
     },
-    "commits": { "type": "array", "items": { "type": "string" } },
-    "next": { "type": "string", "description": "What the next agent should do" }
+    "commits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next": {
+      "type": "string",
+      "description": "What the next agent should do"
+    },
+    "exportedAt": {
+      "type": "string",
+      "description": "Set by `handoff export`"
+    },
+    "git": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Set by `handoff export`: branch, head, dirty, recent",
+      "properties": {
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "head": {
+          "type": "string"
+        },
+        "dirty": {
+          "type": "boolean"
+        },
+        "recent": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
   }
 }

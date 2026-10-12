@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
 import { doctor, format } from "./doctor.mjs"
+import { exportHandoff } from "./handoff.mjs"
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -43,7 +44,20 @@ function runDoctor(args) {
   process.exit(results.every((r) => r.ok) ? 0 : 1)
 }
 
+function runHandoff(args) {
+  const [sub, ...a] = args
+  if (sub !== "export") { console.error("usage: commitar-oc handoff export [dir] [--out dir]"); process.exit(1) }
+  const oi = a.indexOf("--out")
+  const outDir = oi >= 0 ? resolve(a[oi + 1]) : undefined
+  const dir = resolve(a.find((x, i) => !x.startsWith("--") && (oi < 0 || i !== oi + 1)) ?? ".")
+  const r = exportHandoff({ dir, outDir })
+  if (r.error) { console.error(r.error); process.exit(1) }
+  r.warnings.forEach((w) => console.warn(`warn: ${w}`))
+  console.log(`exported to ${r.out}`)
+}
+
 const [cmd, ...rest] = process.argv.slice(2)
 if (cmd === "init") init(resolve(rest[0] ?? "."))
 else if (cmd === "doctor") runDoctor(rest)
-else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke]"); process.exit(cmd ? 1 : 0) }
+else if (cmd === "handoff") runHandoff(rest)
+else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir]"); process.exit(cmd ? 1 : 0) }

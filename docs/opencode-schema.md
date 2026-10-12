@@ -62,3 +62,9 @@ SPEC, RED, GREEN, AUDIT and COMMIT all completed via `mega` -> `task` -> subagen
 `gates` tool, one commit, HANDOFF.json left uncommitted. Took ~9 min for the first three phases
 plus a resume (`opencode run --continue`) for the rest: free models are slow, so budget long timeouts
 and run in the background. HANDOFF.json passed the schema checks in tests.
+
+## Handoff export
+`commitar-oc handoff export [dir] [--out dir]` validates `HANDOFF.json` against
+`protocol/handoff.schema.json`, adds `exportedAt` and `git` state, and writes `handoff.json` + `handoff.md`
+(with the spec inline) to `<dir>/.commitar/handoff/`. Paid commitar should consume `handoff.json`;
+the schema in `protocol/` is the contract (dependency points from HCP to the protocol).

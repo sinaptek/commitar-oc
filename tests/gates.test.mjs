@@ -5,7 +5,7 @@ import { tmpdir } from "node:os"
 import { join, resolve, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { runGates, summarize } from "../adapters/opencode/templates/gates-core.mjs"
-import { validateHandoff } from "./helpers/handoff.mjs"
+import { validateHandoff } from "../cli/handoff.mjs"
 
 const proj = (gates) => {
   const d = mkdtempSync(join(tmpdir(), "gates-"))
