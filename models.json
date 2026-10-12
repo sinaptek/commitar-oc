@@ -1,0 +1,11 @@
+{
+  "_note": "Single fix point for model IDs. Roles reference aliases only. IDs are provider/model as exposed by the proxy (placeholders until checked with `doctor`).",
+  "provider": {
+    "id": "openai",
+    "baseURL": "http://127.0.0.1:8765/v1"
+  },
+  "aliases": {
+    "strong": "openai/gpt-4.1",
+    "fast": "openai/gpt-4.1-mini"
+  }
+}

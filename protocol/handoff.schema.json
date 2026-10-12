@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "commitar HANDOFF",
+  "type": "object",
+  "required": ["version", "project", "phase", "status"],
+  "properties": {
+    "version": { "const": 1 },
+    "project": { "type": "string" },
+    "spec": { "type": "string", "description": "Path to the spec in the vault" },
+    "phase": { "enum": ["SPEC", "RED", "GREEN", "AUDIT", "COMMIT"] },
+    "status": { "enum": ["pending", "in_progress", "gate_failed", "done"] },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["command", "passed"],
+        "properties": { "command": { "type": "string" }, "passed": { "type": "boolean" }, "output": { "type": "string" } }
+      }
+    },
+    "commits": { "type": "array", "items": { "type": "string" } },
+    "next": { "type": "string", "description": "What the next agent should do" }
+  }
+}

@@ -43,3 +43,9 @@ Keys: api, name, env, id, npm, whitelist, blacklist, options, models. A local pr
 ## Still to verify
 - Custom tool and plugin file format (`.opencode/tools`, `plugin`).
 - A real model run through the proxy at 127.0.0.1:8765.
+
+## Custom tools (verified)
+`.opencode/tools/<name>.ts` with `export default tool({description, args, execute})` from
+`@opencode-ai/plugin` registers a tool named `<name>` (checked via `opencode debug agent build`).
+Multiple named exports become `<file>_<export>`. OpenCode auto-creates `.opencode/package.json`,
+`node_modules/` and `.gitignore` on first run, so generated dirs will contain those.

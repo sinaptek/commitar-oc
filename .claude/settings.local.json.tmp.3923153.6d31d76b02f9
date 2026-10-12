@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git config *)",
+      "Bash(curl -sL -m 30 https://opencode.ai/config.json -o schema.json)",
+      "Bash(python3 -I -c ' *)",
+      "Bash(npm install *)",
+      "Bash(opencode --version)",
+      "Bash(python3 -)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Pin OpenCode config schema and record verified findings *)",
+      "Read(//home/mariano/.local/share/opencode/**)",
+      "Bash(curl -s -m 5 http://127.0.0.1:8765/v1/models)",
+      "Bash(node --test tests/*.test.mjs)",
+      "Bash(git commit -q -m 'Add model alias file, protocol roles, OpenCode generator and init CLI *)"
+    ]
+  }
+}
