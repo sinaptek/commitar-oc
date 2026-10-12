@@ -24,6 +24,12 @@ test("no provider block unless a proxy is configured", () => {
   assert.equal(cfg.provider.openai.options.baseURL, "http://127.0.0.1:6768/v1")
 })
 
+test("generator emits the gates tool and runner", () => {
+  const files = generate({ models, roles })
+  assert.match(files[".opencode/tools/gates.ts"], /tool\(\{/)
+  assert.ok(files[".opencode/lib/gates-core.mjs"].includes("runGates"))
+})
+
 test("unknown alias fails loudly", () => {
   assert.throws(() => resolveModel(models, "nope"), /unknown model alias/)
 })

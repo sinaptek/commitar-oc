@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { existsSync } from "node:fs"
+import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
@@ -22,6 +23,11 @@ function init(target) {
     mkdirSync(dirname(path), { recursive: true })
     writeFileSync(path, content)
     console.log(`wrote ${rel}`)
+  }
+  const cfg = join(target, "commitar.json")
+  if (!existsSync(cfg)) {
+    writeFileSync(cfg, JSON.stringify({ name: basename(target), gates: { test: "npm test" } }, null, 2) + "\n")
+    console.log("wrote commitar.json (edit the gate commands)")
   }
   const v = validate(target)
   if (!v.ok) { console.error(`opencode rejected the generated config:\n${v.output}`); process.exit(1) }

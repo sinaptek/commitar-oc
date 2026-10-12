@@ -8,4 +8,4 @@ permission:
   bash: ask
 ---
 Make the failing tests pass with the smallest correct change. Do not edit tests to make them pass.
-Run the test command and report the result verbatim.
+Verify with the `gates` tool (only ["test"], phase "GREEN") and report its output verbatim.

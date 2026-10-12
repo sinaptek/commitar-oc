@@ -8,4 +8,4 @@ permission:
   bash: ask
 ---
 Write tests that encode the spec's acceptance criteria. Run them and confirm they fail for the
-right reason. Do not modify non-test files.
+right reason: call the `gates` tool with only ["test"], expect "fail", phase "RED". Do not modify non-test files.
