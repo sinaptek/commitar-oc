@@ -14,15 +14,15 @@ Full rationale: `docs/design-notes.md` (read it first).
    Headroom (Windows PC, ports ~6767/6768) is context compression only, not a router: optional `proxy`.
 
 ## Current state
-- Only reference material exists. `.opencode/` is the old hand-edited config (Windows path,
-  claude-mem) kept as a reference for what the generator replaces. `skills/*.py` were dropped
-  (stubs; `gates` tool and bash cover them).
-- `dev/` (agency-agents, prime-agent) and `obsidian-second-brain/` are vendored sources, gitignored.
-  Copy from them via the installer; never depend on their paths at runtime. Trim personas, don't load all.
+- Working: `init`, `doctor`, `handoff export`, `persona add`, `vault init`, gates tool, vault_save tool.
+  `npm test` runs everything. Start with `README.md`; verified OpenCode facts are in `docs/opencode-schema.md`.
+- `.opencode/` is the old hand-edited config kept only as a reference. `skills/*.py` were dropped.
+- `dev/` and `obsidian-second-brain/` are vendored sources, gitignored (origins in README). Used only by the
+  installers; never depend on their paths at runtime. Trim personas, don't load all.
+- Open: RED gate is weak (non-zero exit only), no CI, handoff not yet consumed by paid commitar.
 
 ## Rules
-- Verify OpenCode's current config/plugin/agent schema before building the adapter (not yet installed
-  on this machine). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
+- Validate generated config with `opencode debug config` (OpenCode 1.19.0 is installed). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
 - AUDIT must rest on deterministic gates (tests, lint, typecheck), since free models judge poorly.
 - No claude-mem in v1; vault + HANDOFF file instead.
 - No secrets in the repo.
