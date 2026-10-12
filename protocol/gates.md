@@ -11,3 +11,10 @@ A project declares its deterministic gates in `commitar.json` at its root:
 - RED expects `test` to **fail** (`expect: "fail"`); GREEN and AUDIT expect pass.
 - When a `phase` is given, results are merged into `HANDOFF.json` (see `handoff.schema.json`).
 - Agents never decide a gate's result; they only report the tool's output.
+
+## Known limitation: RED
+`expect: "fail"` only checks for a non-zero exit. A test file that does not even load (bad import,
+syntax error) also satisfies it. A missing-implementation import error is a legitimate RED, so
+this cannot be filtered by output heuristics. The GREEN gate catches a broken test file, so
+a bad RED costs a retry, not a wrong result. Seen in the first toy run (tester imported a
+nonexistent `expect` from `node:test`).

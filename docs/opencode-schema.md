@@ -56,3 +56,9 @@ Multiple named exports become `<file>_<export>`. OpenCode auto-creates `.opencod
 - With `--auto`, `mega` delegates via the `task` tool and `@tester` writes files as expected.
 - Free models can stall: always wrap calls in a timeout (doctor uses 60s).
 - Useful: `--format json` emits raw events (`text`, `tool_use`, `step_start/finish`).
+
+## Full pipeline run (toy project, free models, 2026-10-12)
+SPEC, RED, GREEN, AUDIT and COMMIT all completed via `mega` -> `task` -> subagents, each gate through the
+`gates` tool, one commit, HANDOFF.json left uncommitted. Took ~9 min for the first three phases
+plus a resume (`opencode run --continue`) for the rest: free models are slow, so budget long timeouts
+and run in the background. HANDOFF.json passed the schema checks in tests.
