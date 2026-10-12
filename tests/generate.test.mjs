@@ -17,6 +17,13 @@ test("agents use resolved model ids, never aliases", () => {
   assert.doesNotMatch(files[".opencode/agents/tester.md"], /model: fast/)
 })
 
+test("no provider block unless a proxy is configured", () => {
+  assert.equal(JSON.parse(generate({ models, roles })["opencode.json"]).provider, undefined)
+  const proxied = { ...models, proxy: { provider: "openai", baseURL: "http://127.0.0.1:6768/v1" } }
+  const cfg = JSON.parse(generate({ models: proxied, roles })["opencode.json"])
+  assert.equal(cfg.provider.openai.options.baseURL, "http://127.0.0.1:6768/v1")
+})
+
 test("unknown alias fails loudly", () => {
   assert.throws(() => resolveModel(models, "nope"), /unknown model alias/)
 })

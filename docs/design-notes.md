@@ -34,7 +34,9 @@ Proposed structure
 3. Thin external CLI.
    - It handles init, doctor (provider, MCP and paths check) and handoff export. It does not run the agent loop.
 4. Model routing in the proxy.
-   - You already have a proxy at 127.0.0.1:8765 (Headroom). Put the fallback chain there, so a rate limit on Gemini rolls to the next provider without touching agent files. This is the fix for most of the pain in 1.pdf.
+   - SUPERSEDED (2026-10-12): Headroom is a context-compression proxy on the Windows PC (ports 6767/6768, loopback-only),
+     forwarding to api.openai.com / api.anthropic.com. It does not route or fall back between models.
+     v1 uses OpenCode's free models directly via `models.json` aliases; a fallback router is deferred.
 
 The folders you mentioned
 

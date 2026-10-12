@@ -35,7 +35,7 @@ export function generate({ models, roles }) {
     ...(primary && { default_agent: primary.meta.name }),
     model: resolveModel(models, "strong"),
     small_model: resolveModel(models, "fast"),
-    provider: { [models.provider.id]: { options: { baseURL: models.provider.baseURL } } },
+    ...(models.proxy && { provider: { [models.proxy.provider]: { options: { baseURL: models.proxy.baseURL } } } }),
   }
   const files = { "opencode.json": JSON.stringify(config, null, 2) + "\n" }
   for (const { meta, body } of roles) {

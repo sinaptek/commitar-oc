@@ -10,7 +10,8 @@ Full rationale: `docs/design-notes.md` (read it first).
 2. `adapters/opencode/` – templates → generated `opencode.json`, `agents/*.md`, commands, tools.
    Never hand-edit generated output. Model IDs live only in one alias file (`strong`, `fast`).
 3. `cli/` – `init`, `doctor` (providers, MCP, paths), `handoff export`. Does not run the agent loop.
-4. Model fallback chain belongs in the proxy at 127.0.0.1:8765 (Headroom), not in agent files.
+4. Models: aliases in `models.json` default to OpenCode free models (no key). No fallback chain in v1.
+   Headroom (Windows PC, ports ~6767/6768) is context compression only, not a router: optional `proxy`.
 
 ## Current state
 - Only reference material exists. `.opencode/` is the old hand-edited config (Windows path,

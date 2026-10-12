@@ -42,7 +42,7 @@ Keys: api, name, env, id, npm, whitelist, blacklist, options, models. A local pr
 
 ## Still to verify
 - Custom tool and plugin file format (`.opencode/tools`, `plugin`).
-- A real model run through the proxy at 127.0.0.1:8765.
+- (done) Real model run: `opencode run -m opencode/big-pickle` and `opencode/nemotron-3.5-lightning-free` answer with no credentials.
 
 ## Custom tools (verified)
 `.opencode/tools/<name>.ts` with `export default tool({description, args, execute})` from

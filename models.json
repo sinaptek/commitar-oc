@@ -1,11 +1,8 @@
 {
-  "_note": "Single fix point for model IDs. Roles reference aliases only. IDs are provider/model as exposed by the proxy (placeholders until checked with `doctor`).",
-  "provider": {
-    "id": "openai",
-    "baseURL": "http://127.0.0.1:8765/v1"
-  },
+  "_note": "Single fix point for model IDs (provider/model, see `opencode models`). Roles reference aliases only. Defaults are OpenCode's free models: no API key needed. `proxy` is optional: set it to route a provider through a local proxy such as Headroom (context compression only, not a router).",
   "aliases": {
-    "strong": "openai/gpt-4.1",
-    "fast": "openai/gpt-4.1-mini"
-  }
+    "strong": "opencode/big-pickle",
+    "fast": "opencode/nemotron-3.5-lightning-free"
+  },
+  "proxy": null
 }

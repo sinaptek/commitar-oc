@@ -3,3 +3,5 @@ node_modules/
 # Vendored third-party sources: pinned and copied by the installer, not tracked here
 dev/
 obsidian-second-brain/
+.tmp/
+.claude/
