@@ -42,7 +42,7 @@ Free models are slow and can stall: allow minutes per phase. Non-interactive `op
 ## Layout
 
 ```
-protocol/            engine-independent: pipeline.md, gates.md, handoff.schema.json, roles/*.md
+protocol/            engine-independent: pipeline.md, gates.md, handoff.schema.json (+ example, CONTRACT.md), roles/*.md
 adapters/opencode/   generate.mjs, templates/ (gates + vault tools), schema/ (pinned OpenCode schema)
 cli/                 commitar-oc.mjs, doctor, handoff, personas, vault
 models.json          the only place model IDs live (aliases strong / fast); optional `proxy`

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "project": "toy",
+  "spec": "spec.md",
+  "phase": "AUDIT",
+  "status": "in_progress",
+  "gates": [
+    { "command": "node --test", "passed": true, "output": "" }
+  ],
+  "commits": ["2fe6ea4"],
+  "next": "Review the audit result and continue with COMMIT.",
+  "exportedAt": "2026-10-12T18:11:25.593Z",
+  "git": { "branch": "main", "head": "2fe6ea4", "dirty": false, "recent": ["2fe6ea4 Add slugify function with tests and spec"] }
+}
