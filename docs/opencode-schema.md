@@ -49,3 +49,10 @@ Keys: api, name, env, id, npm, whitelist, blacklist, options, models. A local pr
 `@opencode-ai/plugin` registers a tool named `<name>` (checked via `opencode debug agent build`).
 Multiple named exports become `<file>_<export>`. OpenCode auto-creates `.opencode/package.json`,
 `node_modules/` and `.gitignore` on first run, so generated dirs will contain those.
+
+## Non-interactive runs (verified)
+- `opencode run` with `ask` permissions (our roles' default for edit/bash) hangs with no output.
+  Use `--auto` (approves anything not explicitly `deny`) only in disposable dirs or CI.
+- With `--auto`, `mega` delegates via the `task` tool and `@tester` writes files as expected.
+- Free models can stall: always wrap calls in a timeout (doctor uses 60s).
+- Useful: `--format json` emits raw events (`text`, `tool_use`, `step_start/finish`).
