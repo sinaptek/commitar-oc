@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
+import { doctor, format } from "./doctor.mjs"
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -27,6 +28,16 @@ function init(target) {
   console.log("opencode debug config: ok")
 }
 
-const [cmd, arg] = process.argv.slice(2)
-if (cmd === "init") init(resolve(arg ?? "."))
-else { console.error("usage: commitar-oc init [dir]"); process.exit(cmd ? 1 : 0) }
+function runDoctor(args) {
+  const smoke = !args.includes("--no-smoke")
+  const dir = resolve(args.find((a) => !a.startsWith("--")) ?? ".")
+  const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
+  const results = doctor({ dir, models, smoke })
+  console.log(format(results))
+  process.exit(results.every((r) => r.ok) ? 0 : 1)
+}
+
+const [cmd, ...rest] = process.argv.slice(2)
+if (cmd === "init") init(resolve(rest[0] ?? "."))
+else if (cmd === "doctor") runDoctor(rest)
+else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke]"); process.exit(cmd ? 1 : 0) }
