@@ -75,3 +75,7 @@ Clone them into those paths to use the installers; generated projects never depe
 - RED is classified for `node:test` only (syntax errors and bad imports are rejected; a missing implementation is accepted). Other runners keep the plain non-zero-exit rule; see `protocol/gates.md`.
 - The OpenCode adapter in obsidian-second-brain is marked deprecated upstream (works, may need replacing).
 - CI (`.github/workflows/ci.yml`) runs `npm test` on OpenCode 1.19.0 and Node 24 (passing); the suite does not load plugins at runtime, so v1 tool loading is untested. Repo: https://github.com/sinaptek/commitar-oc
+
+## License
+
+MIT, see `LICENSE`. Derived persona files are credited in `THIRD_PARTY_NOTICES.md`.
