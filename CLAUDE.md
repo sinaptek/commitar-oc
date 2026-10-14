@@ -19,10 +19,10 @@ Full rationale: `docs/design-notes.md` (read it first).
 - `.opencode/` is the old hand-edited config kept only as a reference. `skills/*.py` were dropped.
 - `dev/` and `obsidian-second-brain/` are vendored sources, gitignored (origins in README). Used only by the
   installers; never depend on their paths at runtime. Trim personas, don't load all.
-- Open: RED is classified for node:test only (other runners: non-zero exit), CI passes on 1.19.0 (config validation only; repo is public at github.com/sinaptek/commitar-oc), handoff not yet consumed by paid commitar.
+- Open: RED is classified for node:test only (other runners: non-zero exit), CI passes on 1.19.0 (config validation only; runtime checked by hand on 1.19.0 and 2.0.27; repo is public at github.com/sinaptek/commitar-oc), handoff not yet consumed by paid commitar.
 
 ## Rules
-- Validate generated config with `opencode debug config` (locally installed: 2.0.27, which ignores `.opencode/tools`; tools are generated as a v2 plugin too. CI pins 1.19.0, not re-checked). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
+- Validate generated config with `opencode debug config` (locally installed: 2.0.27, which ignores `.opencode/tools`; tools are generated as a v2 plugin too. CI pins 1.19.0; both versions verified at runtime, see docs/opencode-schema.md). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
 - AUDIT must rest on deterministic gates (tests, lint, typecheck), since free models judge poorly.
 - No claude-mem in v1; vault + HANDOFF file instead.
 - No secrets in the repo.

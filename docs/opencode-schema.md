@@ -97,7 +97,7 @@ The vault's own commands (/obsidian-find, /obsidian-recap, ...) are used by open
   Project directory is `ctx.location.directory` (no `context.directory`).
 - Models reach tools only through a generic `execute` tool (`tools.gates({...})`); the plugin load is silent on success.
 - `opencode run` uses a shared background service that can hang; `--standalone` runs a private server and works.
-- Generated output now contains both forms: `.opencode/tools/*.ts` (v1, CI pin 1.19.0, plugin dir untested there)
+- Generated output now contains both forms: `.opencode/tools/*.ts` (v1, CI pin 1.19.0)
   and `.opencode/plugins/commitar/index.ts` (v2). Verified live on 2.0.27: `gates` (writes HANDOFF.json) and `vault_save`.
 - Subagents can use the custom tools too, but only if told how: role text must say they are called via `execute` as
   `tools.<name>(args)`. The generator appends that note to every agent whose role mentions `gates` / `vault_save`.
@@ -112,3 +112,9 @@ The vault's own commands (/obsidian-find, /obsidian-recap, ...) are used by open
 - Generated roles (bash `ask` in `protocol/roles`) get: gate commands from `commitar.json`, read-only git, `git add`/`commit` only for
   roles that may edit, and denies for `rm -rf`, `git push`, `git reset --hard`. Re-run `init` after editing `commitar.json`; `doctor`
   flags a stale allowlist. Interactive toy run: 12 prompts before, 3 after (a `sed`, a `mv`, and `git -c k=v commit`, none allowlisted).
+
+## Both versions at runtime (checked 2026-10-14)
+OpenCode 1.19.0 (installed to a scratch prefix with `npm i opencode-ai@1.19.0`) on a freshly `init`ed project: `gates` is a direct tool
+call and writes HANDOFF.json, `vault_save` writes its note, an `@auditor` delegation records its own AUDIT gate, the bash allowlist
+normalizes, and the extra `.opencode/plugins/commitar/` v2 plugin is ignored without any error. 2.0.27: see sections above. Not in CI
+(it needs live model calls); re-check by hand when bumping either version.
