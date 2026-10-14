@@ -107,3 +107,44 @@ test("COMMIT without any commit stays in_progress; a failing gate is gate_failed
   runGates({ cwd: d, phase: "COMMIT" })
   assert.equal(read(d).status, "gate_failed")
 })
+
+import { classifyRed } from "../adapters/opencode/templates/gates-core.mjs"
+
+const redProj = (file, body) => {
+  const d = proj({ test: "node --test" })
+  writeFileSync(join(d, file), body)
+  return d
+}
+const red = (d) => runGates({ cwd: d, only: ["test"], expect: "fail", phase: "RED" })
+
+test("RED accepts a real failing assertion", () => {
+  const d = redProj("a.test.mjs", 'import {test} from "node:test"; import assert from "node:assert/strict"; test("adds", () => assert.equal(1+1, 3))')
+  assert.equal(red(d).passed, true)
+})
+
+test("RED accepts a test whose implementation module does not exist yet", () => {
+  const d = redProj("a.test.mjs", 'import {test} from "node:test"; import {f} from "./impl.js"; test("t", () => f())')
+  assert.equal(red(d).passed, true)
+})
+
+test("RED accepts a missing export from an existing project module", () => {
+  const d = redProj("a.test.mjs", 'import {test} from "node:test"; import {f} from "./impl.js"; test("t", () => f())')
+  writeFileSync(join(d, "impl.js"), "export const g = 1\n")
+  assert.equal(red(d).passed, true)
+})
+
+test("RED rejects a syntax error, a bad node:test import and a non-failing suite", () => {
+  const syn = red(redProj("a.test.mjs", "syntax error here("))
+  assert.equal(syn.passed, false)
+  assert.match(syn.results[0].output, /^RED REJECTED/)
+  const bad = red(redProj("a.test.mjs", 'import {test, expect} from "node:test"; test("t", () => expect(1))'))
+  assert.equal(bad.passed, false)
+  const green = red(redProj("a.test.mjs", 'import {test} from "node:test"; test("t", () => {})'))
+  assert.equal(green.passed, false)
+})
+
+test("RED rule is skipped for runners that are not node:test", () => {
+  assert.deepEqual(classifyRed("FAILED somehow", "/x"), { ok: true })
+  const d = proj({ test: "echo boom; exit 3" })
+  assert.equal(runGates({ cwd: d, only: ["test"], expect: "fail" }).passed, true)
+})

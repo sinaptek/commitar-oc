@@ -72,6 +72,6 @@ Clone them into those paths to use the installers; generated projects never depe
 
 ## Known limits
 
-- RED only checks for a non-zero exit, so a test file that fails to load also passes RED; GREEN catches it.
+- RED is classified for `node:test` only (syntax errors and bad imports are rejected; a missing implementation is accepted). Other runners keep the plain non-zero-exit rule; see `protocol/gates.md`.
 - The OpenCode adapter in obsidian-second-brain is marked deprecated upstream (works, may need replacing).
 - CI (`.github/workflows/ci.yml`) is written but has never run: the repo has no remote yet. Locally: `npm test`.

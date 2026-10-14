@@ -16,10 +16,17 @@ export function runGates({ cwd, only, expect = "pass", phase, timeoutMs = 600000
   const results = names.map((name) => {
     const command = declared[name]
     if (!command) return { name, command: null, exitCode: null, ok: false, output: `gate "${name}" is not declared in commitar.json` }
-    const r = spawnSync(command, { cwd, shell: true, encoding: "utf8", timeout: timeoutMs })
+    const { NODE_TEST_CONTEXT, ...env } = process.env // else a nested `node --test` changes its output format
+    const r = spawnSync(command, { cwd, shell: true, encoding: "utf8", timeout: timeoutMs, env })
     const exitCode = r.error ? -1 : r.status
-    const output = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? r.error.message : ""}`.trim().slice(-TAIL)
-    return { name, command, exitCode, ok: expect === "fail" ? exitCode !== 0 : exitCode === 0, output }
+    const full = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? r.error.message : ""}`.trim()
+    let ok = expect === "fail" ? exitCode !== 0 : exitCode === 0
+    let note = ""
+    if (expect === "fail" && ok && name === "test") {
+      const c = classifyRed(full, cwd)
+      if (!c.ok) { ok = false; note = `RED REJECTED: ${c.reason}\n` }
+    }
+    return { name, command, exitCode, ok, output: (note + full.slice(-TAIL)).slice(0, TAIL + note.length) }
   })
   const passed = results.length > 0 && results.every((r) => r.ok)
   if (phase) writeHandoff(cwd, cfg, phase, results, passed)
@@ -53,6 +60,29 @@ function commitsSince(cwd) {
   if (head === null) return []
   const list = git(cwd, ["log", "--reverse", "--pretty=%h", base ? `${base}..HEAD` : "HEAD"])
   return list ? list.split("\n").filter(Boolean) : []
+}
+
+// RED must fail because tests fail, or because the implementation does not exist yet. Anything else
+// (syntax error, bad import such as `expect` from node:test) is a broken test file. Only node:test
+// output is classified; other runners keep the plain non-zero-exit rule.
+export function classifyRed(out, cwd) {
+  if (!/^ℹ tests \d+/m.test(out)) return { ok: true }
+  const fails = [...out.matchAll(/^\s*✖ (.+?) \(\d[\d.]*m?s\)/gm)].map((m) => m[1])
+  const isFile = (n) => /\.(?:[cm]?[jt]s|[jt]sx)$/.test(n)
+  const fileFails = fails.filter(isFile)
+  const testFails = fails.filter((n) => !isFile(n))
+  if (!fails.length) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
+  if (fileFails.length) {
+    const missingImpl = (out.match(/Cannot find module '([^']+)'/g) ?? []).every((m) => {
+      const spec = /'([^']+)'/.exec(m)[1]
+      return /^\.{1,2}\//.test(spec) || (spec.startsWith("/") && spec.startsWith(cwd) && !spec.includes("node_modules"))
+    })
+    const exportsOk = (out.match(/The requested module '([^']+)' does not provide an export named/g) ?? []).every((m) => /'\.{1,2}\//.test(m))
+    const otherErrors = /SyntaxError|ReferenceError|TypeError|Cannot find package/.test(out.replace(/^\s*at .*$/gm, "").replace(/SyntaxError: The requested module '[^']+' does not provide an export named .*/g, "")) && !testFails.length
+    const loadOk = /ERR_MODULE_NOT_FOUND|MODULE_NOT_FOUND|does not provide an export/.test(out) && missingImpl && exportsOk && !otherErrors
+    if (!loadOk) return { ok: false, reason: `test file(s) failed to load for a reason other than a missing implementation (${fileFails.join(", ")}); fix the test file` }
+  }
+  return { ok: true }
 }
 
 function writeHandoff(cwd, cfg, phase, results, passed) {

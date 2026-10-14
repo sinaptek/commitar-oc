@@ -15,9 +15,11 @@ A project declares its deterministic gates in `commitar.json` at its root:
   `init` adds `HANDOFF.json` and `.commitar/` to the project's `.gitignore`.
 - Agents never decide a gate's result; they only report the tool's output.
 
-## Known limitation: RED
-`expect: "fail"` only checks for a non-zero exit. A test file that does not even load (bad import,
-syntax error) also satisfies it. A missing-implementation import error is a legitimate RED, so
-this cannot be filtered by output heuristics. The GREEN gate catches a broken test file, so
-a bad RED costs a retry, not a wrong result. Seen in the first toy run (tester imported a
-nonexistent `expect` from `node:test`).
+## RED check
+`expect: "fail"` on the `test` gate is classified, not just "non-zero exit" (node:test output only; other
+runners keep the plain non-zero rule). RED passes when at least one named test fails, or when the only
+load errors are a missing implementation: `Cannot find module` for a relative or in-project path, or a
+missing export from a relative module. It is rejected, with `RED REJECTED: <reason>` in the output, for a
+syntax error, a bad import (e.g. `expect` from `node:test`), a missing package, or a non-zero exit with no
+failing test. This is a heuristic on runner output, not proof the tests are good: GREEN still has to pass.
+Not covered: other runners (jest, pytest, ...), and a test that fails for the wrong reason.
