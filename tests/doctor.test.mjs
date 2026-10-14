@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { doctor } from "../cli/doctor.mjs"
@@ -10,6 +10,11 @@ const mkdir = () => {
   const d = mkdtempSync(join(tmpdir(), "doc-"))
   writeFileSync(join(d, "opencode.json"), "{}")
   mkdirSync(join(d, ".opencode/agents"), { recursive: true })
+  mkdirSync(join(d, ".opencode/tools"), { recursive: true })
+  mkdirSync(join(d, ".opencode/plugins/commitar"), { recursive: true })
+  writeFileSync(join(d, ".opencode/tools/gates.ts"), "")
+  writeFileSync(join(d, ".opencode/plugins/commitar/index.ts"), "")
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "npm test" } }))
   return d
 }
 const fakeRun = (over = {}) => (cmd, args) => {
@@ -54,5 +59,36 @@ test("--no-smoke skips model calls", () => {
 
 test("missing generated files are flagged", () => {
   const d = mkdtempSync(join(tmpdir(), "doc-"))
-  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun(), smoke: false })), ["generated: opencode.json", "generated: .opencode/agents"])
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun(), smoke: false })), ["generated: opencode.json", "generated: .opencode/agents", "custom tools registered", "commitar.json"])
+})
+
+test("v2 needs the plugin, v1 needs the tool files", () => {
+  const v2 = (d) => fakeRun({ "--version": { ok: true, out: "opencode v2.0.27" } })
+  const d = mkdir()
+  assert.deepEqual(failed(doctor({ dir: d, models, run: v2() })), [])
+  rmSync(join(d, ".opencode/plugins"), { recursive: true })
+  assert.deepEqual(failed(doctor({ dir: d, models, run: v2() })), ["custom tools registered"])
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
+  rmSync(join(d, ".opencode/tools"), { recursive: true })
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["custom tools registered"])
+})
+
+test("commitar.json: missing, invalid and no test gate are flagged", () => {
+  const d = mkdir()
+  const f = join(d, "commitar.json")
+  rmSync(f)
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["commitar.json"])
+  writeFileSync(f, "{nope")
+  assert.match(doctor({ dir: d, models, run: fakeRun() }).find((r) => r.name === "commitar.json").detail, /invalid JSON/)
+  writeFileSync(f, JSON.stringify({ gates: { lint: "x" } }))
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["commitar.json"])
+})
+
+test("v2 smoke test runs standalone, v1 does not", () => {
+  const seen = []
+  const spy = (ver) => (c, a) => { if (a[0] === "run") seen.push(a.join(" ")); return fakeRun({ "--version": { ok: true, out: ver } })(c, a) }
+  doctor({ dir: mkdir(), models, run: spy("2.0.27") })
+  doctor({ dir: mkdir(), models, run: spy("1.19.0") })
+  assert.ok(seen.slice(0, 2).every((x) => x.includes("--standalone")))
+  assert.ok(seen.slice(2).every((x) => !x.includes("--standalone")))
 })
