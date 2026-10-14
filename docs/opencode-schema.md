@@ -89,3 +89,13 @@ AI-first frontmatter and `## For future agent` preamble itself, converts banned 
 looks like a secret, overwrites the previous spec note for the same project, and returns an error string instead of
 throwing so the pipeline is not blocked. Delete `vault.json` to turn all of this off.
 The vault's own commands (/obsidian-find, /obsidian-recap, ...) are used by opening OpenCode inside the vault dir.
+
+## OpenCode v2 (verified 2.0.27, package `@opencode/cli`)
+- `.opencode/tools/*.ts` is **ignored** in v2. Custom tools register through plugins:
+  `.opencode/plugins/<name>/index.ts` with `Plugin.define({id, setup(ctx)})` from `@opencode/plugin`,
+  `ctx.tool.transform(editor => editor.add({name, description, input: <JSON Schema>, execute(input) -> {content}}))`.
+  Project directory is `ctx.location.directory` (no `context.directory`).
+- Models reach tools only through a generic `execute` tool (`tools.gates({...})`); the plugin load is silent on success.
+- `opencode run` uses a shared background service that can hang; `--standalone` runs a private server and works.
+- Generated output now contains both forms: `.opencode/tools/*.ts` (v1, CI pin 1.19.0, plugin dir untested there)
+  and `.opencode/plugins/commitar/index.ts` (v2). Verified live on 2.0.27: `gates` (writes HANDOFF.json) and `vault_save`.

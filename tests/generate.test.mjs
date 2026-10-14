@@ -30,6 +30,14 @@ test("generator emits the gates tool and runner", () => {
   assert.ok(files[".opencode/lib/gates-core.mjs"].includes("runGates"))
 })
 
+test("generator emits a v2 plugin registering gates (v2 ignores .opencode/tools)", () => {
+  const files = generate({ models, roles })
+  const plugin = files[".opencode/plugins/commitar/index.ts"]
+  assert.match(plugin, /name: "gates"/)
+  assert.match(plugin, /const VAULT = null/)
+  assert.doesNotMatch(plugin, /vault-core/)
+})
+
 test("unknown alias fails loudly", () => {
   assert.throws(() => resolveModel(models, "nope"), /unknown model alias/)
 })

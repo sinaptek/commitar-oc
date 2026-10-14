@@ -67,6 +67,10 @@ test("generator adds vault tool and mega instruction only when configured", () =
   assert.doesNotMatch(off[".opencode/agents/mega.md"], /Knowledge vault/)
   const on = generate({ models, roles, vault: { path: "/v/ault" } })
   assert.match(on[".opencode/tools/vault_save.ts"], /const VAULT = "\/v\/ault"/)
+  const plugin = on[".opencode/plugins/commitar/index.ts"]
+  assert.match(plugin, /const VAULT = "\/v\/ault"/)
+  assert.match(plugin, /name: "vault_save"/)
+  assert.match(plugin, /vault-core\.mjs/)
   assert.match(on[".opencode/agents/mega.md"], /Knowledge vault[\s\S]*never depends on the vault/)
   assert.doesNotMatch(on[".opencode/agents/tester.md"], /vault_save/)
 })

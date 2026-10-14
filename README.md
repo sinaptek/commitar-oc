@@ -26,7 +26,7 @@ cd ~/my-project && opencode                    # primary agent is mega
 node cli/commitar-oc.mjs handoff export ~/my-project   # -> .commitar/handoff/{handoff.json,handoff.md}
 ```
 
-Free models are slow and can stall: allow minutes per phase. Non-interactive `opencode run` hangs on
+Free models are slow and can stall: allow minutes per phase. OpenCode 2.x: use `opencode run --standalone` (the shared background service can hang). Non-interactive `opencode run` hangs on
 `ask` permissions; use `--auto` only in disposable directories.
 
 ## Commands

@@ -22,7 +22,7 @@ Full rationale: `docs/design-notes.md` (read it first).
 - Open: RED gate is weak (non-zero exit only), CI written but never run (no remote), handoff not yet consumed by paid commitar.
 
 ## Rules
-- Validate generated config with `opencode debug config` (locally installed: 2.0.27; CI pins 1.19.0; verified on 2.0.27 only, 1.19.0 not re-checked). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
+- Validate generated config with `opencode debug config` (locally installed: 2.0.27, which ignores `.opencode/tools`; tools are generated as a v2 plugin too. CI pins 1.19.0, not re-checked). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
 - AUDIT must rest on deterministic gates (tests, lint, typecheck), since free models judge poorly.
 - No claude-mem in v1; vault + HANDOFF file instead.
 - No secrets in the repo.

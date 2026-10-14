@@ -60,5 +60,8 @@ export function generate({ models, roles, vault = null }) {
     files[".opencode/lib/vault-core.mjs"] = readFileSync(join(templates, "vault-core.mjs"), "utf8")
     files[".opencode/tools/vault_save.ts"] = readFileSync(join(templates, "vault.ts"), "utf8").replace("__VAULT_PATH__", JSON.stringify(vault.path))
   }
+  let plugin = readFileSync(join(templates, "plugin-v2.ts"), "utf8").replace("__VAULT_PATH__", vault ? JSON.stringify(vault.path) : "null")
+  if (!vault) plugin = plugin.replace(/^import \{ saveNote \}.*\n/m, "")
+  files[".opencode/plugins/commitar/index.ts"] = plugin
   return files
 }
