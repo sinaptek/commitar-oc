@@ -17,7 +17,7 @@
     },
     "spec": {
       "type": "string",
-      "description": "Path to the spec in the vault"
+      "description": "Path to the spec, relative to the project root"
     },
     "phase": {
       "enum": [

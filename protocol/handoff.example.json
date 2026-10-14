@@ -1,14 +1,34 @@
 {
   "version": 1,
   "project": "toy",
-  "spec": "spec.md",
-  "phase": "AUDIT",
-  "status": "in_progress",
+  "spec": "SPEC.md",
+  "phase": "COMMIT",
+  "status": "done",
   "gates": [
-    { "command": "node --test", "passed": true, "output": "" }
+    {
+      "phase": "GREEN",
+      "command": "node --test",
+      "passed": true,
+      "output": ""
+    },
+    {
+      "phase": "COMMIT",
+      "command": "node --test",
+      "passed": true,
+      "output": ""
+    }
   ],
-  "commits": ["2fe6ea4"],
-  "next": "Review the audit result and continue with COMMIT.",
+  "commits": [
+    "2fe6ea4"
+  ],
+  "next": "Review the result and continue in paid commitar.",
   "exportedAt": "2026-10-12T18:11:25.593Z",
-  "git": { "branch": "main", "head": "2fe6ea4", "dirty": false, "recent": ["2fe6ea4 Add slugify function with tests and spec"] }
+  "git": {
+    "branch": "main",
+    "head": "2fe6ea4",
+    "dirty": false,
+    "recent": [
+      "2fe6ea4 Add slugify function with tests and spec"
+    ]
+  }
 }

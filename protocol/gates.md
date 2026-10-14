@@ -9,7 +9,10 @@ A project declares its deterministic gates in `commitar.json` at its root:
 - `test` is required. `lint` and `typecheck` are optional; a missing optional gate is skipped, a missing `test` fails.
 - A gate passes iff its command exits 0. Output is kept (tail only) for the agents.
 - RED expects `test` to **fail** (`expect: "fail"`); GREEN and AUDIT expect pass.
-- When a `phase` is given, results are merged into `HANDOFF.json` (see `handoff.schema.json`).
+- When a `phase` is given, the tool updates `HANDOFF.json` (see `handoff.schema.json`), deterministically, with no model input:
+  latest gate results per phase, `spec` (`SPEC.md` or `spec.md`, or `spec` in `commitar.json`), `commits` since the first
+  handoff write (baseline in `.commitar/base`), `next`, and `status` (`done` only after a passing COMMIT gate with a commit).
+  `init` adds `HANDOFF.json` and `.commitar/` to the project's `.gitignore`.
 - Agents never decide a gate's result; they only report the tool's output.
 
 ## Known limitation: RED

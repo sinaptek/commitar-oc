@@ -18,6 +18,10 @@
 ## Changelog
 - v1 (2026-10-12): initial. Optional `exportedAt` and `git` are added by `handoff export`.
 
+- v1 (2026-10-14): no breaking change. `spec` is a project-relative path (not a vault path). Optional
+  per-gate `phase`; `gates` holds the latest result per phase. `commits` = short hashes made since the first
+  handoff write. `status` is `done` only after a passing COMMIT gate with at least one commit.
+
 ## Open questions (unanswered)
 Phase names, status values and extra fields are unconfirmed against paid commitar; direction
 (one-way or two-way) is undecided. Resolve before declaring v1 stable.

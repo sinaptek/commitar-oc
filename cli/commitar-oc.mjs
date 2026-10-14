@@ -37,6 +37,14 @@ function init(target) {
     writeFileSync(cfg, JSON.stringify({ name: basename(target), gates: { test: "npm test" } }, null, 2) + "\n")
     console.log("wrote commitar.json (edit the gate commands)")
   }
+  // Pipeline state must never be committed: HANDOFF.json and .commitar/ are local by design.
+  const gi = join(target, ".gitignore")
+  const have = existsSync(gi) ? readFileSync(gi, "utf8") : ""
+  const missing = ["HANDOFF.json", ".commitar/"].filter((l) => !have.split("\n").includes(l))
+  if (missing.length) {
+    writeFileSync(gi, have + (have && !have.endsWith("\n") ? "\n" : "") + missing.join("\n") + "\n")
+    console.log(`wrote .gitignore (${missing.join(", ")})`)
+  }
   const v = validate(target)
   if (!v.ok) { console.error(`opencode rejected the generated config:\n${v.output}`); process.exit(1) }
   console.log("opencode debug config: ok")

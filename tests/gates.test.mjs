@@ -63,3 +63,47 @@ test("output is truncated to the tail", () => {
   const r = runGates({ cwd: proj({ test: "head -c 10000 /dev/zero | tr '\\0' x; exit 1" }) })
   assert.ok(r.results[0].output.length <= 2000)
 })
+
+import { spawnSync } from "node:child_process"
+import { existsSync } from "node:fs"
+
+const sh = (d, c) => spawnSync(c, { cwd: d, shell: true, encoding: "utf8" })
+const gitProj = (gates) => {
+  const d = proj(gates)
+  sh(d, "git init -q && git config user.email t@e.invalid && git config user.name t && git add -A && git commit -qm init")
+  return d
+}
+const read = (d) => JSON.parse(readFileSync(join(d, "HANDOFF.json"), "utf8"))
+
+test("handoff lifecycle: spec, per-phase gates, commits since baseline, done only after a commit", () => {
+  const d = gitProj({ test: "exit 0" })
+  writeFileSync(join(d, "SPEC.md"), "# spec\n")
+  runGates({ cwd: d, phase: "SPEC" })
+  let h = read(d)
+  assert.equal(h.spec, "SPEC.md")
+  assert.deepEqual(h.commits, [])
+  assert.match(h.next, /RED/)
+  assert.ok(existsSync(join(d, ".commitar", "base")))
+
+  sh(d, "git add -A && git commit -qm spec")
+  runGates({ cwd: d, phase: "GREEN" })
+  runGates({ cwd: d, phase: "GREEN" })
+  h = read(d)
+  assert.equal(h.commits.length, 1)
+  assert.deepEqual(h.gates.map((g) => g.phase), ["SPEC", "GREEN"], "latest result per phase, no duplicates")
+
+  runGates({ cwd: d, phase: "COMMIT" })
+  h = read(d)
+  assert.equal(h.status, "done")
+  assert.deepEqual(validateHandoff(h), [])
+})
+
+test("COMMIT without any commit stays in_progress; a failing gate is gate_failed", () => {
+  const d = gitProj({ test: "exit 0" })
+  runGates({ cwd: d, phase: "COMMIT" })
+  assert.equal(read(d).status, "in_progress")
+  assert.match(read(d).next, /Commit the work/)
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ name: "p", gates: { test: "exit 1" } }))
+  runGates({ cwd: d, phase: "COMMIT" })
+  assert.equal(read(d).status, "gate_failed")
+})
