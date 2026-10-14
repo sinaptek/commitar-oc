@@ -33,7 +33,20 @@ export function resolveModel(models, alias) {
   return id
 }
 
-export function generate({ models, roles, vault = null }) {
+// Narrow bash allowlist for roles whose bash is `ask`: the project's own gate commands and read-only git
+// are allowed; staging/committing only for roles that may edit. Last matching rule wins, so the denies come last.
+export function bashRules(gates, canEdit) {
+  const rules = [["*", "ask"]]
+  for (const cmd of Object.values(gates ?? {}).filter((c) => typeof c === "string" && c.trim())) {
+    rules.push([cmd.trim(), "allow"], [`${cmd.trim()} *`, "allow"])
+  }
+  for (const g of ["git status", "git diff", "git log", "git show"]) rules.push([g, "allow"], [`${g} *`, "allow"])
+  if (canEdit) for (const g of ["git add", "git commit"]) rules.push([g, "allow"], [`${g} *`, "allow"])
+  for (const d of ["rm -rf *", "git push *", "git reset --hard *"]) rules.push([d, "deny"])
+  return rules
+}
+
+export function generate({ models, roles, vault = null, gates = { test: "npm test" } }) {
   const primary = roles.find((r) => r.meta.mode === "primary")
   const config = {
     $schema: "https://opencode.ai/config.json",
@@ -55,7 +68,11 @@ export function generate({ models, roles, vault = null }) {
   for (const { meta, body: rawBody } of roles) {
     const full = meta.mode === "primary" ? rawBody + roster + (vault ? vaultNote : "") : rawBody
     const body = full + callNote(full)
-    const perm = Object.entries(meta.permission ?? {}).map(([k, v]) => `  ${k}: ${v}`).join("\n")
+    const perm = Object.entries(meta.permission ?? {}).map(([k, v]) => {
+      if (k !== "bash" || v !== "ask") return `  ${k}: ${v}`
+      const rules = bashRules(gates, (meta.permission.edit ?? "ask") !== "deny")
+      return `  bash:\n${rules.map(([pat, eff]) => `    ${JSON.stringify(pat)}: ${eff}`).join("\n")}`
+    }).join("\n")
     files[`.opencode/agents/${meta.name}.md`] =
       `---\ndescription: ${JSON.stringify(meta.description)}\nmode: ${meta.mode}\nmodel: ${resolveModel(models, meta.model)}\n` +
       (perm ? `permission:\n${perm}\n` : "") +

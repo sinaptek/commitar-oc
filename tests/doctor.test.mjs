@@ -92,3 +92,13 @@ test("v2 smoke test runs standalone, v1 does not", () => {
   assert.ok(seen.slice(0, 2).every((x) => x.includes("--standalone")))
   assert.ok(seen.slice(2).every((x) => !x.includes("--standalone")))
 })
+
+test("stale bash allowlist is flagged after commitar.json changes", () => {
+  const d = mkdir()
+  writeFileSync(join(d, ".opencode/agents/mega.md"), '  bash:\n    "npm test": allow\n')
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "pytest -q" } }))
+  const rs = doctor({ dir: d, models, run: fakeRun() })
+  assert.deepEqual(failed(rs), ["bash allowlist"])
+  assert.match(rs.find((r) => r.name === "bash allowlist").detail, /pytest -q/)
+})

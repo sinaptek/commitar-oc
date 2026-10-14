@@ -102,3 +102,13 @@ The vault's own commands (/obsidian-find, /obsidian-recap, ...) are used by open
 - Subagents can use the custom tools too, but only if told how: role text must say they are called via `execute` as
   `tools.<name>(args)`. The generator appends that note to every agent whose role mentions `gates` / `vault_save`.
   Verified on a full toy pipeline: tester, implementer and auditor each recorded their own phase gate.
+
+## Permissions (verified on 2.0.27)
+- Agent frontmatter `permission:` accepts v1 syntax, normalized to v2 rules (`bash` -> `shell`). An object form works:
+  `bash: {"*": ask, "node --test": allow, "node --test *": allow, "rm -rf *": deny}`; a `"bash <pattern>": allow` key is ignored
+  and the `permissions:` array form also works. Last matching rule wins, so denies go last. A trailing ` *` also matches the bare command.
+- `opencode debug agents` goes through the shared background service and can return a cached agent of the same name; use unique
+  names when probing.
+- Generated roles (bash `ask` in `protocol/roles`) get: gate commands from `commitar.json`, read-only git, `git add`/`commit` only for
+  roles that may edit, and denies for `rm -rf`, `git push`, `git reset --hard`. Re-run `init` after editing `commitar.json`; `doctor`
+  flags a stale allowlist. Interactive toy run: 12 prompts before, 3 after (a `sed`, a `mv`, and `git -c k=v commit`, none allowlisted).

@@ -56,3 +56,15 @@ test("agents that mention gates are told to call it through execute", () => {
   }
   assert.doesNotMatch(files[".opencode/agents/code-reviewer.md"], /Calling the tools/)
 })
+
+test("bash allowlist: gate commands and read-only git allowed, destructive denied, last match order", () => {
+  const files = generate({ models, roles, gates: { test: "pytest -q", lint: "ruff check ." } })
+  const tester = files[".opencode/agents/tester.md"]
+  assert.match(tester, /bash:\n    "\*": ask\n/)
+  for (const c of ['"pytest -q": allow', '"pytest -q *": allow', '"ruff check .": allow', '"git status *": allow', '"git commit *": allow']) assert.ok(tester.includes(c), c)
+  assert.ok(tester.indexOf('"rm -rf *": deny') > tester.indexOf('"git commit *": allow'), "denies must come last")
+  const auditor = files[".opencode/agents/auditor.md"]
+  assert.doesNotMatch(auditor, /git (add|commit)/)
+  assert.match(auditor, /edit: deny/)
+  assert.match(generate({ models, roles })[".opencode/agents/mega.md"], /"npm test": allow/)
+})

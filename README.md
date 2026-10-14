@@ -26,6 +26,8 @@ cd ~/my-project && opencode                    # primary agent is mega
 node cli/commitar-oc.mjs handoff export ~/my-project   # -> .commitar/handoff/{handoff.json,handoff.md}
 ```
 
+Agents may run only the project's gate commands and read-only git without asking (plus `git add`/`commit` where they may edit); `rm -rf`, `git push` and `git reset --hard` are denied and everything else asks. Re-run `init` after editing `commitar.json`.
+
 Free models are slow and can stall: allow minutes per phase. OpenCode 2.x: use `opencode run --standalone` (the shared background service can hang). Non-interactive `opencode run` hangs on
 `ask` permissions; use `--auto` only in disposable directories.
 

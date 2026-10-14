@@ -25,7 +25,10 @@ export function validate(dir) {
 
 function init(target) {
   const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
-  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")), vault: loadVaultConfig() })
+  // Gate commands feed the bash allowlist; re-run init after editing commitar.json.
+  let gates
+  try { gates = JSON.parse(readFileSync(join(target, "commitar.json"), "utf8")).gates } catch {}
+  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")), vault: loadVaultConfig(), ...(gates && { gates }) })
   for (const [rel, content] of Object.entries(files)) {
     const path = join(target, rel)
     mkdirSync(dirname(path), { recursive: true })

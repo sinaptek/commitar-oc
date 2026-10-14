@@ -43,6 +43,13 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
     const g = JSON.parse(readFileSync(gcfg, "utf8"))
     results.push(typeof g.gates?.test === "string" && g.gates.test ? pass("commitar.json", `test gate: ${g.gates.test}`)
       : fail("commitar.json", 'no "gates.test" command; a missing test gate always fails'))
+    // The agents' bash allowlist is generated from the gate commands; editing commitar.json needs a re-run of init.
+    const agent = join(dir, ".opencode/agents/mega.md")
+    if (existsSync(agent)) {
+      const text = readFileSync(agent, "utf8")
+      const stale = Object.values(g.gates ?? {}).filter((c) => typeof c === "string" && c.trim() && !text.includes(JSON.stringify(c.trim())))
+      results.push(stale.length ? fail("bash allowlist", `gate command(s) not allowed in the agents: ${stale.join(", ")}; run: commitar-oc init`) : pass("bash allowlist", "matches commitar.json"))
+    }
   } catch (e) {
     results.push(fail("commitar.json", e.code === "ENOENT" ? "missing; run: commitar-oc init" : `invalid JSON: ${e.message}`))
   }
