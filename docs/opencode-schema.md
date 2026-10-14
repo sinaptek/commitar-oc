@@ -99,3 +99,6 @@ The vault's own commands (/obsidian-find, /obsidian-recap, ...) are used by open
 - `opencode run` uses a shared background service that can hang; `--standalone` runs a private server and works.
 - Generated output now contains both forms: `.opencode/tools/*.ts` (v1, CI pin 1.19.0, plugin dir untested there)
   and `.opencode/plugins/commitar/index.ts` (v2). Verified live on 2.0.27: `gates` (writes HANDOFF.json) and `vault_save`.
+- Subagents can use the custom tools too, but only if told how: role text must say they are called via `execute` as
+  `tools.<name>(args)`. The generator appends that note to every agent whose role mentions `gates` / `vault_save`.
+  Verified on a full toy pipeline: tester, implementer and auditor each recorded their own phase gate.

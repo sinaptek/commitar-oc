@@ -46,8 +46,15 @@ export function generate({ models, roles, vault = null }) {
   const specialists = roles.filter((r) => r.meta.mode === "subagent")
   const roster = `\n\n## Available subagents\n${specialists.map((r) => `- @${r.meta.name}: ${r.meta.description}`).join("\n")}`
   const vaultNote = `\n\n## Knowledge vault\nAfter the SPEC gate passes, call the \`vault_save\` tool with kind "spec" and a short summary of the spec (goal, acceptance criteria, key decisions). The spec itself stays in the project and the handoff never depends on the vault: if \`vault_save\` reports an error, mention it and continue.`
+  // OpenCode v2 exposes custom tools only through `execute`; free models do not infer that.
+  const callNote = (text) => {
+    const used = ["gates", "vault_save"].filter((n) => text.includes(`\`${n}\``))
+    if (!used.length) return ""
+    return `\n\n## Calling the tools\n${used.map((n) => `\`${n}\``).join(" and ")} ${used.length > 1 ? "are" : "is"} called through the \`execute\` tool as \`tools.<name>(args)\`, e.g. \`return await tools.${used[0]}(...)\`. Do not run them with bash; if \`execute\` is missing, say so instead of running the commands yourself.`
+  }
   for (const { meta, body: rawBody } of roles) {
-    const body = meta.mode === "primary" ? rawBody + roster + (vault ? vaultNote : "") : rawBody
+    const full = meta.mode === "primary" ? rawBody + roster + (vault ? vaultNote : "") : rawBody
+    const body = full + callNote(full)
     const perm = Object.entries(meta.permission ?? {}).map(([k, v]) => `  ${k}: ${v}`).join("\n")
     files[`.opencode/agents/${meta.name}.md`] =
       `---\ndescription: ${JSON.stringify(meta.description)}\nmode: ${meta.mode}\nmodel: ${resolveModel(models, meta.model)}\n` +

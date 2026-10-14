@@ -48,3 +48,11 @@ test("init output passes opencode debug config", () => {
   assert.equal(r.status, 0, r.stderr + r.stdout)
   assert.ok(existsSync(join(dir, ".opencode/agents/mega.md")))
 })
+
+test("agents that mention gates are told to call it through execute", () => {
+  const files = generate({ models, roles })
+  for (const r of roles.filter((x) => /`gates`/.test(x.body))) {
+    assert.match(files[`.opencode/agents/${r.meta.name}.md`], /through the `execute` tool as `tools\.<name>\(args\)`/)
+  }
+  assert.doesNotMatch(files[".opencode/agents/code-reviewer.md"], /Calling the tools/)
+})
