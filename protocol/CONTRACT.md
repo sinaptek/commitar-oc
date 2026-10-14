@@ -7,6 +7,8 @@
 - Keep your own pinned copy of the schema and the sample. Do not read this repo by path.
 - Add a contract test: validate the sample against your copy. Update both copies deliberately.
 - Ignore fields you do not know.
+- Status: commitar-hcp has this as `packages/handoff-contract` (pinned copy at commit 424a563, a Zod schema, drift tests, and a
+  `check-upstream` script that compares its pin with this repo). Nothing in HCP consumes handoffs yet.
 
 ## Versioning
 - Safe within a version: adding optional fields.
