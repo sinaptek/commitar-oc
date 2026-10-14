@@ -65,6 +65,7 @@ test("bash allowlist: gate commands and read-only git allowed, destructive denie
   assert.ok(tester.indexOf('"rm -rf *": deny') > tester.indexOf('"git commit *": allow'), "denies must come last")
   const auditor = files[".opencode/agents/auditor.md"]
   assert.doesNotMatch(auditor, /git (add|commit)/)
+  assert.match(auditor, /bash:\n    "\*": deny\n/, "read-only roles must not be able to write through bash")
   assert.match(auditor, /edit: deny/)
   assert.match(generate({ models, roles })[".opencode/agents/mega.md"], /"npm test": allow/)
 })

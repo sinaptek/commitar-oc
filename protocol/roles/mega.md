@@ -4,7 +4,7 @@ description: Orchestrator. Runs the SPEC, RED, GREEN, AUDIT, COMMIT pipeline by 
 mode: primary
 model: strong
 permission:
-  edit: ask
+  edit: allow
   bash: ask
 ---
 You orchestrate the phase pipeline (see protocol/pipeline.md). Write the spec first, then delegate

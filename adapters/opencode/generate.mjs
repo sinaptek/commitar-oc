@@ -35,8 +35,9 @@ export function resolveModel(models, alias) {
 
 // Narrow bash allowlist for roles whose bash is `ask`: the project's own gate commands and read-only git
 // are allowed; staging/committing only for roles that may edit. Last matching rule wins, so the denies come last.
+// Read-only roles (edit: deny) default to deny, not ask: `--auto` approves every ask, and bash could write files.
 export function bashRules(gates, canEdit) {
-  const rules = [["*", "ask"]]
+  const rules = [["*", canEdit ? "ask" : "deny"]]
   for (const cmd of Object.values(gates ?? {}).filter((c) => typeof c === "string" && c.trim())) {
     rules.push([cmd.trim(), "allow"], [`${cmd.trim()} *`, "allow"])
   }

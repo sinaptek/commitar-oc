@@ -118,3 +118,15 @@ OpenCode 1.19.0 (installed to a scratch prefix with `npm i opencode-ai@1.19.0`) 
 call and writes HANDOFF.json, `vault_save` writes its note, an `@auditor` delegation records its own AUDIT gate, the bash allowlist
 normalizes, and the extra `.opencode/plugins/commitar/` v2 plugin is ignored without any error. 2.0.27: see sections above. Not in CI
 (it needs live model calls); re-check by hand when bumping either version.
+
+## `edit` permissions at runtime (checked 2026-10-14)
+- **2.0.27: `edit: ask` is not enforced.** The Write tool ran with no prompt in the TUI and in `run`, on a pristine project too.
+  1.19.0 enforces it (`permission requested: edit (...); auto-rejecting` in non-interactive runs). `write` is an alias of `edit`.
+- **`edit: deny` works on both:** on 2.0.27 the tool is removed from the agent's catalog.
+- `--auto` approves every `ask`, so a read-only role with `bash: ask` could still write through bash (seen: `@auditor` ran
+  `echo hello > file`). Hence roles with `edit: deny` now get `bash "*": deny` plus only the gate commands and read-only git;
+  verified: the same probe under `--auto` no longer creates the file.
+- Roles therefore use only `allow` / `deny` for edit (mega was `ask`, now `allow`: it writes SPEC.md and `ask` would block unattended v1 runs).
+- The v2 `execute` tool has no `fs`/`require`/`import` (built-ins plus `fetch`), so it is not a write path.
+- A probe agent with both edit and bash fully denied got "free tier can only be used from within OpenCode" from the free model service; keep at
+  least one allowed shell pattern when probing.
