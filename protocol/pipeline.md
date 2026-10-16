@@ -4,7 +4,7 @@ Tool-agnostic. Each phase has an owner role and a deterministic exit gate.
 
 | Phase | Role | Exit gate |
 |-------|------|-----------|
-| SPEC | mega | spec written to the vault, acceptance criteria listed |
+| SPEC | mega | spec written, acceptance criteria listed, baseline suite recorded (see gates.md) |
 | RED | tester | new tests exist and fail for the right reason |
 | GREEN | implementer | all tests pass |
 | AUDIT | auditor | tests, lint and typecheck pass; findings addressed |
