@@ -71,11 +71,15 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
     if (!known.has(id)) { results.push(fail(`alias ${alias}`, `${id} not in \`opencode models\``)); continue }
     if (!smoke) { results.push(pass(`alias ${alias}`, `${id} (not smoke-tested)`)); continue }
     const t0 = Date.now()
-    const s = run("opencode", ["run", ...(v2 ? ["--standalone"] : []), "-m", id, "Reply with the single word: ok"], { cwd: dir, timeout: smokeTimeoutMs })
+    const ping = () => run("opencode", ["run", ...(v2 ? ["--standalone"] : []), "-m", id, "Reply with the single word: ok"], { cwd: dir, timeout: smokeTimeoutMs })
+    let s = ping()
+    if (s.timedOut) s = ping() // free models stall at random: one retry before calling it a failure
     const secs = ((Date.now() - t0) / 1000).toFixed(1)
     results.push(
       s.ok && /\bok\b/i.test(s.out) ? pass(`alias ${alias}`, `${id} answered in ${secs}s`)
-        : fail(`alias ${alias}`, s.timedOut ? `${id} timed out after ${smokeTimeoutMs / 1000}s (free models can stall)` : `${id}: ${s.out.slice(-200)}`),
+        : fail(`alias ${alias}`, s.timedOut ? `${id} timed out twice after ${smokeTimeoutMs / 1000}s (free models can stall)`
+          : /unavailable|deprecated|not found/i.test(s.out) ? `${id} looks retired (${s.out.trim().slice(-120)}); change it in models.json and re-run init`
+          : `${id}: ${s.out.slice(-200)}`),
     )
   }
 

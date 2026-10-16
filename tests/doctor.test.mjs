@@ -52,6 +52,17 @@ test("invalid config surfaces opencode's message", () => {
   assert.match(rs.find((r) => r.name === "opencode accepts config").detail, /invalid/)
 })
 
+test("smoke retries a timeout once", () => {
+  let n = 0
+  const rs = doctor({ dir: mkdir(), models, run: (c, a) => (a[0] === "run" ? (n++ === 0 ? { ok: false, timedOut: true, out: "" } : { ok: true, out: "ok" }) : fakeRun()(c, a)) })
+  assert.ok(rs.find((r) => r.name === "alias strong").ok)
+})
+
+test("smoke names a retired model", () => {
+  const rs = doctor({ dir: mkdir(), models, run: (c, a) => (a[0] === "run" ? { ok: false, out: "Error: Model unavailable: x" } : fakeRun()(c, a)) })
+  assert.match(rs.find((r) => r.name === "alias strong").detail, /retired/)
+})
+
 test("--no-smoke skips model calls", () => {
   const calls = []
   doctor({ dir: mkdir(), models, smoke: false, run: (c, a) => (calls.push(a[0]), fakeRun()(c, a)) })
