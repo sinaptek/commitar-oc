@@ -130,3 +130,15 @@ normalizes, and the extra `.opencode/plugins/commitar/` v2 plugin is ignored wit
 - The v2 `execute` tool has no `fs`/`require`/`import` (built-ins plus `fetch`), so it is not a write path.
 - A probe agent with both edit and bash fully denied got "free tier can only be used from within OpenCode" from the free model service; keep at
   least one allowed shell pattern when probing.
+
+## Full pipeline on a generated project (OpenCode 2.0.27, checked 2026-10-16)
+Fresh `init` on a scratch project, `opencode` started inside it (default agent `mega`), one prompt: build `slug(text)` through SPEC, RED,
+GREEN, AUDIT, COMMIT. Real `@tester`, `@implementer` and `@auditor` subagents ran, each calling `gates` (phase recorded in HANDOFF.json);
+`vault_save` wrote its note; `handoff export` produced the bundle. About 40 minutes with free models.
+- RED was classified correctly twice: missing module, then two real assertion failures.
+- `mega` wrote a spec that contradicted itself (an invented `&` -> "and" rule); `@implementer` flagged it, `mega` fixed the spec and re-ran
+  RED and GREEN. Nothing in the SPEC gate checks spec content.
+- The project had no `package.json`, so `npm test` could not run; `mega` created one. `doctor` now flags this.
+- The auditor reported results without pasting the raw gates output; its role now requires it.
+- Running `opencode` inside this repo (not a generated project) loads the old `.opencode/` reference: no `mega`, no subagents, no `gates` or
+  `vault_save`, and the model improvises. `init` and `doctor` now refuse this repo as a target.
