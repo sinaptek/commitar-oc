@@ -198,3 +198,7 @@ Run in a copy of the vault (`~/vault-test`), real vault untouched.
 - Minor: find/recap said "this morning" for something logged in the evening.
 - Slow: about 30 min for the first command (the model re-reads every reference file each time); the whole run took about 3 hours.
 - Free model retired mid-session: the default model `ll-alpha-free` returned "Model ll-alpha-free has been deprecated" while still listed by `opencode models`. Fix: switch model (`/models`). The commitar-oc aliases (`big-pickle`, `nemotron-3.5-lightning-free`) were not affected, but nothing checks a model before a run. The vault session had to be restarted on `big-pickle`.
+
+## Alias swap (OpenCode 2.0.27, checked 2026-10-17): config level PASSED
+
+Edited only `models.json` (strong -> `opencode/glm-5.3-flash-free`, fast -> `opencode/deepseek-v4.1-flash-free`) and re-ran `init` in a scratch project: the 2 strong agents (mega, software-architect) and the default `model` in opencode.json took the new strong ID, the 4 fast agents took the new fast ID, `opencode debug config` accepted it, and `doctor` smoke pings answered in about 2.4 s each (big-pickle timed out at 60 s the same day). No other file needed changes. Not run: a full pipeline on the swapped models, so quality of those models on the roles is unknown.
