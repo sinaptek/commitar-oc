@@ -13,11 +13,16 @@ export function defaultRun(cmd, args, { cwd, timeout = 30000 } = {}) {
   }
 }
 
+// The commitar-oc repo itself is not a project: its .opencode/ is an old reference config with no roles or tools.
+export const isToolRepo = (dir) => existsSync(join(dir, "adapters/opencode/generate.mjs")) && existsSync(join(dir, "protocol/pipeline.md"))
+
 const pass = (name, detail = "") => ({ name, ok: true, detail })
 const fail = (name, detail) => ({ name, ok: false, detail })
 
 export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeoutMs = 60000, vault = null }) {
   const results = []
+
+  if (isToolRepo(dir)) return [fail("target is a project", `${dir} is the commitar-oc repo itself, not a project; run doctor/opencode in a separate project directory`)]
 
   const v = run("opencode", ["--version"])
   if (!v.ok) return [fail("opencode installed", v.error ?? "not found; run: npm i -g opencode-ai")]
@@ -43,6 +48,8 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
     const g = JSON.parse(readFileSync(gcfg, "utf8"))
     results.push(typeof g.gates?.test === "string" && g.gates.test ? pass("commitar.json", `test gate: ${g.gates.test}`)
       : fail("commitar.json", 'no "gates.test" command; a missing test gate always fails'))
+    if (/^\s*(npm|pnpm|yarn)\b/.test(g.gates?.test ?? "") && !existsSync(join(dir, "package.json")))
+      results.push(fail("package.json", `test gate "${g.gates.test}" needs a package.json with a test script; none found`))
     // The agents' bash allowlist is generated from the gate commands; editing commitar.json needs a re-run of init.
     const agent = join(dir, ".opencode/agents/mega.md")
     if (existsSync(agent)) {

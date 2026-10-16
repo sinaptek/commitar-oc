@@ -5,7 +5,7 @@ import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
-import { doctor, format } from "./doctor.mjs"
+import { doctor, format, isToolRepo } from "./doctor.mjs"
 import { exportHandoff } from "./handoff.mjs"
 import { addPersona } from "./personas.mjs"
 import { initVault } from "./vault.mjs"
@@ -24,6 +24,7 @@ export function validate(dir) {
 }
 
 function init(target) {
+  if (isToolRepo(target)) { console.error(`${target} is the commitar-oc repo itself; run init on a separate project directory`); process.exit(1) }
   const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
   // Gate commands feed the bash allowlist; re-run init after editing commitar.json.
   let gates

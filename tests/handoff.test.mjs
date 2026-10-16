@@ -92,3 +92,10 @@ test("HANDOFF.json and .commitar/ alone do not make the tree dirty", () => {
   const real = (c, a) => (a[0] === "status" ? { ok: true, out: "?? HANDOFF.json\n M src.js" } : gitRun(false)(c, a))
   assert.match(buildBundle({ dir: proj(ok, "s"), run: real }).warnings.join("|"), /uncommitted/)
 })
+
+test("markdown labels gates by phase and marks RED as expected fail", () => {
+  const md = buildBundle({ dir: proj({ ...ok, gates: [{ phase: "RED", command: "t", passed: true }, { phase: "GREEN", command: "t", passed: false, output: "boom" }] }), run: noGit }).md
+  assert.match(md, /- PASS RED `t` \(expected fail\)/)
+  assert.match(md, /- FAIL GREEN `t`\n/)
+  assert.match(md, /Output of GREEN `t`/)
+})

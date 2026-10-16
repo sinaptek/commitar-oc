@@ -14,6 +14,7 @@ const mkdir = () => {
   mkdirSync(join(d, ".opencode/plugins/commitar"), { recursive: true })
   writeFileSync(join(d, ".opencode/tools/gates.ts"), "")
   writeFileSync(join(d, ".opencode/plugins/commitar/index.ts"), "")
+  writeFileSync(join(d, "package.json"), "{}")
   writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "npm test" } }))
   return d
 }
@@ -101,4 +102,23 @@ test("stale bash allowlist is flagged after commitar.json changes", () => {
   const rs = doctor({ dir: d, models, run: fakeRun() })
   assert.deepEqual(failed(rs), ["bash allowlist"])
   assert.match(rs.find((r) => r.name === "bash allowlist").detail, /pytest -q/)
+})
+
+test("npm test gate without package.json is flagged", () => {
+  const d = mkdir()
+  rmSync(join(d, "package.json"))
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["package.json"])
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "node --test" } }))
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
+})
+
+test("the commitar-oc repo itself is refused as a target", () => {
+  const d = mkdir()
+  mkdirSync(join(d, "adapters/opencode"), { recursive: true })
+  mkdirSync(join(d, "protocol"), { recursive: true })
+  writeFileSync(join(d, "adapters/opencode/generate.mjs"), "")
+  writeFileSync(join(d, "protocol/pipeline.md"), "")
+  const rs = doctor({ dir: d, models, run: fakeRun() })
+  assert.deepEqual(failed(rs), ["target is a project"])
+  assert.equal(rs.length, 1)
 })

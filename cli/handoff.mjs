@@ -83,8 +83,8 @@ export function renderMarkdown(j, spec, warnings) {
   if (warnings.length) L.push("", "## Warnings", ...warnings.map((w) => `- ${w}`))
   if (j.next) L.push("", "## Next", j.next)
   if (j.gates?.length) {
-    L.push("", "## Gates", ...j.gates.map((g) => `- ${g.passed ? "PASS" : "FAIL"} \`${g.command}\``))
-    for (const g of j.gates.filter((x) => !x.passed && x.output)) L.push("", `Output of \`${g.command}\`:`, "```", g.output, "```")
+    L.push("", "## Gates", ...j.gates.map((g) => `- ${g.passed ? "PASS" : "FAIL"}${g.phase ? ` ${g.phase}` : ""} \`${g.command}\`${g.phase === "RED" ? " (expected fail)" : ""}`))
+    for (const g of j.gates.filter((x) => !x.passed && x.output)) L.push("", `Output of${g.phase ? ` ${g.phase}` : ""} \`${g.command}\`:`, "```", g.output, "```")
   }
   const commits = j.git?.recent?.length ? j.git.recent : j.commits ?? []
   if (commits.length) L.push("", "## Commits", ...commits.map((c) => `- ${c}`))
