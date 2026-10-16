@@ -142,3 +142,15 @@ GREEN, AUDIT, COMMIT. Real `@tester`, `@implementer` and `@auditor` subagents ra
 - The auditor reported results without pasting the raw gates output; its role now requires it.
 - Running `opencode` inside this repo (not a generated project) loads the old `.opencode/` reference: no `mega`, no subagents, no `gates` or
   `vault_save`, and the model improvises. `init` and `doctor` now refuse this repo as a target.
+
+## Bug fix on existing code (OpenCode 2.0.27, checked 2026-10-16)
+Scratch project with a committed buggy `wordCount` (`split(" ")`) and two passing tests, `gates.test` = `node --test`. Same pipeline, prompt
+gave four failing examples. (A first attempt ran in the finished slug project by mistake: `mega` asked, then planted its own buggy fixture,
+so it tested nothing; always check the panel path.)
+- RED failed on four real assertion mismatches (`3 !== 2`, `1 !== 0`, `5 !== 1`, `1 !== 3`); the two original tests kept passing.
+- GREEN changed only `wordcount.js`. `@implementer` noticed the suggested one-liner `trim().split(/\s+/).length` returns 1 for `""` and added a guard.
+- `@auditor` pasted the gates output verbatim and judged from it alone (the tightened role works live). Commit had exactly the three named files.
+- `handoff export` labels gates by phase (`PASS RED ... (expected fail)`) and records the commit hash.
+- `mega` still embellished the spec (carriage return, form feed, a Constraints section). Harmless, but SPEC content is unchecked.
+- `vault_save` overwrites a note of the same name; test notes must be deleted by hand from the vault.
+- Not yet exercised: a failing path (`gate_failed`, retry loop), the vault commands, swapping a model alias.
