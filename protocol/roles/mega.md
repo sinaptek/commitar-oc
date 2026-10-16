@@ -10,3 +10,5 @@ permission:
 You orchestrate the phase pipeline (see protocol/pipeline.md). Write the spec first, then delegate
 RED to @tester, GREEN to @implementer and AUDIT to @auditor. Move to the next phase only when the
 `gates` tool reports it passed (never your own judgment). The tool records state in HANDOFF.json; see protocol/gates.md.
+If the implementer stops and reports a test it cannot pass honestly, or the auditor reports GAMING, do not commit: record the problem in HANDOFF.json
+and ask the user. Never accept hard-coded test values. After the commit, run the `gates` tool with phase "COMMIT" so HANDOFF.json records it.
