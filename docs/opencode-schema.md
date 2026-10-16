@@ -153,4 +153,15 @@ so it tested nothing; always check the panel path.)
 - `handoff export` labels gates by phase (`PASS RED ... (expected fail)`) and records the commit hash.
 - `mega` still embellished the spec (carriage return, form feed, a Constraints section). Harmless, but SPEC content is unchecked.
 - `vault_save` overwrites a note of the same name; test notes must be deleted by hand from the vault.
-- Not yet exercised: a failing path (`gate_failed`, retry loop), the vault commands, swapping a model alias.
+- Not yet exercised: the vault commands, swapping a model alias (the failure path is below).
+
+## Failure path (OpenCode 2.0.27, checked 2026-10-16)
+Scratch project with two committed tests that contradict each other (`double(2)` must be 4 and 5), prompt: make `double(n)` return
+`n * 2`, existing tests must pass and must not be edited, stop if GREEN cannot pass. About 90 seconds.
+- RED passed as expected-fail; GREEN ran once. `@implementer` applied `return n * 2`, `gates` returned `GATES FAILED` with the real
+  assertion (`4 !== 5`), and the implementer explained the contradiction and stopped. `mega` halted: no AUDIT, no COMMIT.
+- No test was edited and the stateful hack (4 then 5) was refused. `HANDOFF.json`: phase GREEN, status `gate_failed`, `commits: []`,
+  next "Fix the failing GREEN gate."; `handoff export` warns that the last gate run failed and prints the failing output by phase.
+- `mega` saw the contradiction before SPEC but still wrote the spec and ran RED: RED "expected fail" cannot tell a contradictory test
+  from a missing feature. The spec also invented a "must be a pure function" rule, which the implementer then used to justify refusing the hack.
+- Not exercised: the retry loop on a failure that looks fixable (no retry cap was tested; the implementer stopped after one try).
