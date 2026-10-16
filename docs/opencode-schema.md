@@ -187,3 +187,14 @@ Same `isPrime` fixture in a fresh project. About 11 minutes.
   is not a clean blind test; `mega` improvised a SPEC gate with `expect: "fail"` (the stub suite was red) because the protocol does not say what the
   SPEC gate expects when tests already exist; it committed the test fix along with the two named files, and said so.
 - Still unexercised: the retry cap on a failure that looks fixable (the implementer stopped after 2 runs because it recognized the conflict).
+
+## Vault commands (OpenCode 2.0.27, scratch copy of the vault, checked 2026-10-16/17): PASSED
+
+Run in a copy of the vault (`~/vault-test`), real vault untouched.
+
+- `/obsidian-*` are not registered OpenCode slash commands. The `/` popup shows "No matching commands". They work only through the trigger phrases in the vault's AGENTS.md ("save the conversation to the vault", "recap today", "search my notes for ..."). A message must not start with a label line either: a pasted "4. Save ..." line before the command made Enter do nothing.
+- project, capture, decide (lightweight), find, recap and save all followed the command files: notes had frontmatter and the "For future agent" preamble (capture used the documented minimal schema), wikilinks, dated entries, ASCII only. Board card, daily note and project Key Decisions were updated. `vault_health.py` stayed clean (only "wanted note" for the unwritten `[[commitar-oc]]`, which the vault treats as a non-error).
+- No fabrication: empty `related-*`, "TBD" decision placeholder replaced only when a decision existed. `save` wrote nothing new and skipped the dev-log: everything was already saved by the earlier steps and no work had happened.
+- Minor: find/recap said "this morning" for something logged in the evening.
+- Slow: about 30 min for the first command (the model re-reads every reference file each time); the whole run took about 3 hours.
+- Free model retired mid-session: the default model `ll-alpha-free` returned "Model ll-alpha-free has been deprecated" while still listed by `opencode models`. Fix: switch model (`/models`). The commitar-oc aliases (`big-pickle`, `nemotron-3.5-lightning-free`) were not affected, but nothing checks a model before a run. The vault session had to be restarted on `big-pickle`.
