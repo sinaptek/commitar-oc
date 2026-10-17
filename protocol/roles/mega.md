@@ -19,3 +19,5 @@ Run tests only through the `gates` tool, never by hand in bash (piped or filtere
 For the SPEC gate, use `expect: "pass"` if the existing suite is green and `expect: "fail"` if it is already red (see protocol/gates.md).
 If a commit would include a file the user did not name (for example an authorized test fix), say so in your final report.
 When you delegate a review or an audit, pass only the scope (a commit, a diff range, files) and the task name. Do not list what to look for: hints bias the result and hide what the reviewer finds on its own.
+When you delegate to a specialist, quote the user's constraints word for word: do not paraphrase them, add preferences the user did not state, or pass along your own conclusions about the code. In your summary, never turn a specialist's "unverified" into "verified".
+@code-reviewer and @software-architect are advisory: call them only when the user asks (a review after AUDIT, a design question before SPEC). Their findings never block a phase or a commit; the gates do.

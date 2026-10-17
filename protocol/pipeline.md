@@ -11,3 +11,8 @@ Tool-agnostic. Each phase has an owner role and a deterministic exit gate.
 | COMMIT | mega | clean tree, one commit per phase |
 
 Gates are commands (tests, lint, typecheck), never model opinion. State goes to the HANDOFF file.
+
+## Advisory steps (optional, never a gate)
+- `@software-architect` before SPEC, only when the user asks for a design: returns a recommendation and a decision record as text; the result feeds the spec.
+- `@code-reviewer` after AUDIT, only when the user asks: findings ranked BLOCKER / SUGGESTION / NIT. They are opinion. Only the deterministic gates decide whether a phase passes or a commit is made.
+

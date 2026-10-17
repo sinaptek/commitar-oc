@@ -312,3 +312,13 @@ Fixture `~/toy-review`: one commit adding a 40-line accounts module with 3 plant
 - Not a blind test: `mega`'s delegation prompt listed things to look at (negative amounts, insufficient funds, persistence), taken from the commit title and generic review topics. The SQL injection and the swallowed error
   were not hinted. mega.md now says to pass only the scope when delegating a review or audit, and code-reviewer.md now asks for findings first, plain ASCII labels, no invented problems, and no encouragement closing.
 - Not checked: whether the reviewer's own git calls were ever denied (the log shows only its final text).
+
+## software-architect on a design question (OpenCode 2.0.27, checked 2026-10-17): works, with two relay problems
+Fixture `~/toy-review`; question: how should the accounts module persist data (one developer, no new dependencies, a CLI on a laptop, a few thousand accounts, one writer today and a second planned in about 3 months, no data loss on a crash). About 3 minutes.
+- The answer was sound: five options with trade-offs (status quo, JSON with atomic replace and a lock, JSONL with compaction, one file per account, `node:sqlite`), a recommendation that respects every stated constraint (no dependencies, tmp file + fsync + rename + directory fsync,
+  a lock around one read-modify-write), the second writer addressed, five explicit triggers for moving to `node:sqlite` (which loads on the local Node 24.19), a list of things not to do, and a decision record as text. Its claims about the code were true
+  (`save()` has no callers, the swallowed error, the unvalidated `transfer`, the SQL string), it flagged what it could not check, and it changed no files.
+- Weak points: about 2,300 words for a 40-line module, with a hand-rolled stale-lock protocol; it ranked `node:sqlite` second partly because "plain files only" "reads like a stated preference", a phrase `mega` added when it paraphrased the user's "no new dependencies".
+- Relay problems in `mega`: it rewrote the constraints and pre-loaded the delegation with its own reading of the code, and its closing summary said "verified Node >= 22.5" although the architect had said "verify first" (the shell was denied for `node --version`).
+  mega.md now says to quote constraints verbatim, never to upgrade "unverified" to "verified", and that both advisors are advisory (called on request, never gates). software-architect.md now asks for the recommendation first, about one page, constraints quoted exactly, and unchecked environment facts marked as unverified.
+  pipeline.md lists both as optional advisory steps.
