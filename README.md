@@ -35,7 +35,7 @@ Free models are slow and can stall: allow minutes per phase. OpenCode 2.x: use `
 
 | Command | What it does |
 |---|---|
-| `init [dir]` | Generate OpenCode config, agents and tools from `protocol/` + `models.json`; validate with `opencode debug config` |
+| `init [dir] [--scratch-vault]` | Generate OpenCode config, agents and tools from `protocol/` + `models.json`; validate with `opencode debug config`. `--scratch-vault` points `vault_save` at `<dir>/.commitar/vault` (gitignored) instead of the shared vault: use it for test and scratch runs |
 | `doctor [dir] [--no-smoke]` | Check OpenCode (version-aware: v2 plugin vs v1 tools), generated files, `commitar.json`, config validity, each model alias (60 s call), vault, proxy |
 | `handoff export [dir] [--out dir]` | Validate `HANDOFF.json` against `protocol/handoff.schema.json`, add git state, write json + md |
 | `persona add <slug...>` | Copy and trim a persona from the vendored agency-agents into `protocol/roles/` (read-only by default) |

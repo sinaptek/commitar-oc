@@ -91,3 +91,31 @@ test("doctor flags an uninitialized vault", () => {
   const rs = doctor({ dir: d, models: { aliases: { strong: "p/a" } }, run, smoke: false, vault: { path: join(d, "nope") } })
   assert.match(rs.find((r) => r.name === "vault").detail, /vault init/)
 })
+
+test("scratch vault lives inside the project's .commitar, takes saves, and leaves the shared vault alone", async () => {
+  const { initScratchVault } = await import("../cli/vault.mjs")
+  const shared = mkVault()
+  const dir = mkdtempSync(join(tmpdir(), "scratch-"))
+  const cfg = initScratchVault({ dir, base: { path: shared, owner: "x" } })
+  assert.equal(cfg.path, join(dir, ".commitar", "vault"))
+  assert.equal(cfg.owner, "x")
+  assert.ok(existsSync(join(cfg.path, "_CLAUDE.md")))
+  const r = saveNote({ vaultPath: cfg.path, ...base })
+  assert.ok(r.ok && r.path.startsWith(cfg.path))
+  assert.equal(existsSync(join(shared, "Architecture")), false)
+  initScratchVault({ dir, base: null }) // idempotent, keeps existing notes
+  assert.ok(existsSync(r.path))
+})
+
+test("a generated project's vault tool points at the scratch vault and doctor reads that path", async () => {
+  const { projectVaultPath } = await import("../cli/doctor.mjs")
+  const { initScratchVault } = await import("../cli/vault.mjs")
+  const dir = mkdtempSync(join(tmpdir(), "scratch-gen-"))
+  assert.equal(projectVaultPath(dir), null)
+  const vault = initScratchVault({ dir })
+  const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
+  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")), vault })
+  mkdirSync(join(dir, ".opencode/tools"), { recursive: true })
+  writeFileSync(join(dir, ".opencode/tools/vault_save.ts"), files[".opencode/tools/vault_save.ts"])
+  assert.equal(projectVaultPath(dir), join(dir, ".commitar", "vault"))
+})

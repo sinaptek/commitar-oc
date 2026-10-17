@@ -14,7 +14,7 @@ Full rationale: `docs/design-notes.md` (read it first).
    Headroom (Windows PC, ports ~6767/6768) is context compression only, not a router: optional `proxy`.
 
 ## Current state
-- Working: `init`, `doctor`, `handoff export`, `persona add`, `vault init`, gates tool, vault_save tool.
+- Working: `init` (`--scratch-vault` keeps test runs out of the shared vault), `doctor`, `handoff export`, `persona add`, `vault init`, gates tool, vault_save tool.
   `npm test` runs everything. Start with `README.md`; verified OpenCode facts are in `docs/opencode-schema.md`.
 - `.opencode/` is the old hand-edited config kept only as a reference. `skills/*.py` were dropped.
 - `dev/` and `obsidian-second-brain/` are vendored sources, gitignored (origins in README). Used only by the

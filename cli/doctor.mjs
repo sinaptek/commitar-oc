@@ -3,6 +3,14 @@ import { spawnSync } from "node:child_process"
 import { accessSync, constants, existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
+// The vault a generated project writes to is baked into its vault_save tool; check that one (a scratch vault differs from vault.json).
+export function projectVaultPath(dir) {
+  try {
+    const m = /const VAULT = ("(?:[^"\\]|\\.)*")/.exec(readFileSync(join(dir, ".opencode/tools/vault_save.ts"), "utf8"))
+    return m ? JSON.parse(m[1]) : null
+  } catch { return null }
+}
+
 export function defaultRun(cmd, args, { cwd, timeout = 30000 } = {}) {
   const r = spawnSync(cmd, args, { cwd, encoding: "utf8", timeout })
   return {

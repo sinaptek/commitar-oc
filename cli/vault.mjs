@@ -1,6 +1,6 @@
 // vault init: bootstrap the shared vault and install a subset of obsidian-second-brain commands.
 // Source is the vendored obsidian-second-brain (only needed at install time, never at runtime).
-import { existsSync, mkdirSync, mkdtempSync, copyFileSync, cpSync, readdirSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, copyFileSync, cpSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { spawnSync } from "node:child_process"
@@ -43,4 +43,13 @@ export function initVault({ config, source, run = defaultRun }) {
   run("find", [vault, "-type", "d", "-exec", "chmod", "g+s", "{}", "+"])
   steps.push("group-writable")
   return steps
+}
+
+// Scratch vault: a throwaway vault inside the project's own (gitignored) .commitar/ folder, so test runs never write into the shared vault.
+export function initScratchVault({ dir, base = null }) {
+  const path = join(dir, ".commitar", "vault")
+  mkdirSync(path, { recursive: true })
+  const marker = join(path, "_CLAUDE.md")
+  if (!existsSync(marker)) writeFileSync(marker, "# Scratch vault\n\nCreated by `commitar-oc init --scratch-vault`. Holds notes written by this project's runs only. Safe to delete.\n")
+  return { ...(base ?? {}), path }
 }

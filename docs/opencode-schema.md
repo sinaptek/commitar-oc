@@ -288,3 +288,9 @@ Same controlled state as attempt 2, config regenerated with the "blanket instruc
 - Slip: it also set HANDOFF `status` to `blocked`, which is not in the schema, so `handoff export` rejected the file. mega.md now says to edit `next` only.
 - `vault_save` wrote a devlog into the real vault (deleted afterwards).
 - Not covered: the second half of the flow (the user authorizes the named change and the run continues). That path was exercised by the daysBetween run, not under this rule.
+
+## Scratch vault for test runs (checked 2026-10-17)
+Every scratch run used to write spec and dev-log notes into the shared vault (deleted by hand each time). `init --scratch-vault` now generates the project with `vault_save` pointing at `<project>/.commitar/vault`
+(a minimal `_CLAUDE.md` marks it as a vault; `.commitar/` is already gitignored). `doctor` checks the vault path the project actually uses (read from its generated `vault_save` tool), so a scratch project is
+checked against its own vault. Verified: unit tests (helper, idempotence, generated path, doctor path), the CLI, and a real `mega` run in OpenCode 2.0.27 that called `vault_save` through `execute`: the note landed in
+`.commitar/vault/Architecture/` and the shared vault stayed empty. Projects generated without the flag still write to the shared vault.

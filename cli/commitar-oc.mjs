@@ -5,10 +5,10 @@ import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
-import { doctor, format, isToolRepo } from "./doctor.mjs"
+import { doctor, format, isToolRepo, projectVaultPath } from "./doctor.mjs"
 import { exportHandoff } from "./handoff.mjs"
 import { addPersona } from "./personas.mjs"
-import { initVault } from "./vault.mjs"
+import { initVault, initScratchVault } from "./vault.mjs"
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -23,13 +23,15 @@ export function validate(dir) {
   return { ok: r.status === 0, output: (r.stderr || r.stdout).trim() }
 }
 
-function init(target) {
+function init(target, { scratchVault = false } = {}) {
   if (isToolRepo(target)) { console.error(`${target} is the commitar-oc repo itself; run init on a separate project directory`); process.exit(1) }
   const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
   // Gate commands feed the bash allowlist; re-run init after editing commitar.json.
   let gates
   try { gates = JSON.parse(readFileSync(join(target, "commitar.json"), "utf8")).gates } catch {}
-  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")), vault: loadVaultConfig(), ...(gates && { gates }) })
+  // --scratch-vault: vault_save writes to <project>/.commitar/vault instead of the shared vault (for test runs).
+  const vault = scratchVault ? initScratchVault({ dir: target, base: loadVaultConfig() }) : loadVaultConfig()
+  const files = generate({ models, roles: loadRoles(join(root, "protocol/roles")), vault, ...(gates && { gates }) })
   for (const [rel, content] of Object.entries(files)) {
     const path = join(target, rel)
     mkdirSync(dirname(path), { recursive: true })
@@ -58,7 +60,9 @@ function runDoctor(args) {
   const smoke = !args.includes("--no-smoke")
   const dir = resolve(args.find((a) => !a.startsWith("--")) ?? ".")
   const models = JSON.parse(readFileSync(join(root, "models.json"), "utf8"))
-  const results = doctor({ dir, models, smoke, vault: loadVaultConfig() })
+  const shared = loadVaultConfig()
+  const own = projectVaultPath(dir)
+  const results = doctor({ dir, models, smoke, vault: own ? { ...(shared ?? {}), path: own } : shared })
   console.log(format(results))
   process.exit(results.every((r) => r.ok) ? 0 : 1)
 }
@@ -97,9 +101,9 @@ function runVault(args) {
 }
 
 const [cmd, ...rest] = process.argv.slice(2)
-if (cmd === "init") init(resolve(rest[0] ?? "."))
+if (cmd === "init") init(resolve(rest.find((a) => !a.startsWith("--")) ?? "."), { scratchVault: rest.includes("--scratch-vault") })
 else if (cmd === "doctor") runDoctor(rest)
 else if (cmd === "handoff") runHandoff(rest)
 else if (cmd === "persona") runPersona(rest)
 else if (cmd === "vault") runVault(rest)
-else { console.error("usage: commitar-oc init [dir] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | persona add <slug...> | vault init"); process.exit(cmd ? 1 : 0) }
+else { console.error("usage: commitar-oc init [dir] [--scratch-vault] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | persona add <slug...> | vault init"); process.exit(cmd ? 1 : 0) }
