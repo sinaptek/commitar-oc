@@ -201,7 +201,7 @@ Run in a copy of the vault (`~/vault-test`), real vault untouched.
 
 ## Alias swap (OpenCode 2.0.27, checked 2026-10-17): config level PASSED
 
-Edited only `models.json` (strong -> `opencode/glm-5.3-flash-free`, fast -> `opencode/deepseek-v4.1-flash-free`) and re-ran `init` in a scratch project: the 2 strong agents (mega, software-architect) and the default `model` in opencode.json took the new strong ID, the 4 fast agents took the new fast ID, `opencode debug config` accepted it, and `doctor` smoke pings answered in about 2.4 s each (big-pickle timed out at 60 s the same day). No other file needed changes. Not run: a full pipeline on the swapped models, so quality of those models on the roles is unknown.
+Edited only `models.json` (strong -> `opencode/glm-5.3-flash-free`, fast -> `opencode/deepseek-v4.1-flash-free`) and re-ran `init` in a scratch project: the 2 strong agents (mega, implementer) and the default `model` in opencode.json took the new strong ID, the 4 fast agents (tester, auditor, code-reviewer, software-architect) took the new fast ID, `opencode debug config` accepted it, and `doctor` smoke pings answered in about 2.4 s each (big-pickle timed out at 60 s the same day). No other file needed changes. Not run: a full pipeline on the swapped models, so quality of those models on the roles is unknown.
 
 ## Full pipeline on swapped models (OpenCode 2.0.27, checked 2026-10-17): PASSED, 77 s
 
