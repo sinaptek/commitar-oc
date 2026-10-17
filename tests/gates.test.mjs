@@ -148,3 +148,35 @@ test("RED rule is skipped for runners that are not node:test", () => {
   const d = proj({ test: "echo boom; exit 3" })
   assert.equal(runGates({ cwd: d, only: ["test"], expect: "fail" }).passed, true)
 })
+
+test("retry cap: the 3rd failed GREEN run in a row says stop, in the output and in HANDOFF next", () => {
+  const d = proj({ test: "exit 1" })
+  const run = () => runGates({ cwd: d, phase: "GREEN" })
+  const a = run(), b = run()
+  assert.equal(a.capReached, false)
+  assert.equal(b.capReached, false)
+  assert.doesNotMatch(summarize(b), /RETRY CAP/)
+  const c = run()
+  assert.equal(c.greenFailures, 3)
+  assert.equal(c.capReached, true)
+  assert.match(summarize(c), /RETRY CAP REACHED \(3 failed GREEN runs in a row\): stop now/)
+  const h = JSON.parse(readFileSync(join(d, "HANDOFF.json"), "utf8"))
+  assert.equal(h.status, "gate_failed")
+  assert.match(h.next, /RETRY CAP REACHED/)
+  assert.deepEqual(validateHandoff(h), [])
+  assert.equal(run().greenFailures, 4) // keeps saying stop
+})
+
+test("retry cap: a pass or another phase resets the count; RED failures and phase-less runs never count", () => {
+  const d = proj({ test: "exit 1" })
+  const fail = (phase, expect) => runGates({ cwd: d, phase, expect })
+  fail("GREEN"); fail("GREEN")
+  assert.equal(fail("RED", "pass").greenFailures, 0) // new phase resets
+  fail("GREEN"); fail("GREEN")
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ name: "p", gates: { test: "true" } }))
+  assert.equal(runGates({ cwd: d, phase: "GREEN" }).greenFailures, 0) // a pass resets
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ name: "p", gates: { test: "exit 1" } }))
+  for (let i = 0; i < 5; i++) assert.equal(runGates({ cwd: d, phase: "RED" }).capReached, false)
+  for (let i = 0; i < 5; i++) assert.equal(runGates({ cwd: d }).capReached, false)
+  assert.equal(runGates({ cwd: d, phase: "GREEN" }).greenFailures, 1)
+})

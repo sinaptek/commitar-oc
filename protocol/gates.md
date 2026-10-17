@@ -12,6 +12,9 @@ A project declares its deterministic gates in `commitar.json` at its root:
 - SPEC records the baseline of the existing suite: `expect: "pass"` when it is green (new tests come in RED), `expect: "fail"` when
   the suite already exists and is red (stub implementation, bug report, known-failing tests). A project with no tests yet exits 0, so that is a green baseline: `expect: "pass"`.
   COMMIT expects pass.
+- Retry cap: the tool counts consecutive failed GREEN runs (kept in `.commitar/green_failures`, not in HANDOFF.json). On the 3rd it appends
+  `RETRY CAP REACHED ...: stop now, report ... to the user` to its output and sets HANDOFF `next` to the same text; every further failed GREEN run repeats it.
+  A passing GREEN run, or a run of any other phase, resets the count. RED failures never count. The tool does not refuse to run: after the user decides, the next run proceeds normally.
 - When a `phase` is given, the tool updates `HANDOFF.json` (see `handoff.schema.json`), deterministically, with no model input:
   latest gate results per phase, `spec` (`SPEC.md` or `spec.md`, or `spec` in `commitar.json`), `commits` since the first
   handoff write (baseline in `.commitar/base`), `next`, and `status` (`done` only after a passing COMMIT gate with a commit).

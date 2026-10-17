@@ -243,3 +243,9 @@ Fixture `daysBetween`: a stub and 5 tests, one of which (`2024-02-28` to `2024-0
 - Slips: the SPEC that `mega` wrote copied the wrong expectation as acceptance criterion 5 without noticing the contradiction; `vault_save` wrote into the real vault again (deleted).
 - Conclusion: three runs (isPrime, daysBetween, the first isPrime) show the implementer stopping on a contradiction it can see in the tests. The "stop after 3 gate runs" rule has not fired. It only matters for a failure that does
   not look like a contradiction, and it exists as prompt text only, so a model that keeps retrying is not stopped by anything deterministic.
+
+## Retry cap enforced by the gates tool (checked 2026-10-17)
+Because no model run reached the prompt-level cap (see the fixture run above), the cap now lives in `gates-core.mjs`: the 3rd consecutive failed GREEN run appends
+`RETRY CAP REACHED (n failed GREEN runs in a row): stop now ...` to the tool output and to HANDOFF `next`; further failed runs repeat it; a pass or any other phase resets;
+RED never counts. The count is in `.commitar/green_failures`, so HANDOFF.json and the paid-commitar contract are unchanged. Unit tests cover the count, the reset and the
+HANDOFF validity, and a generated project was checked to contain the code and the updated mega/implementer text. Not yet seen: a real model reacting to the line.

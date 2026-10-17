@@ -5,6 +5,7 @@ import { join, basename, dirname } from "node:path"
 
 const TAIL = 2000
 const ORDER = ["test", "lint", "typecheck"]
+export const GREEN_CAP = 3
 
 export function runGates({ cwd, only, expect = "pass", phase, timeoutMs = 600000 }) {
   const cfgPath = join(cwd, "commitar.json")
@@ -29,8 +30,26 @@ export function runGates({ cwd, only, expect = "pass", phase, timeoutMs = 600000
     return { name, command, exitCode, ok, output: (note + full.slice(-TAIL)).slice(0, TAIL + note.length) }
   })
   const passed = results.length > 0 && results.every((r) => r.ok)
-  if (phase) writeHandoff(cwd, cfg, phase, results, passed)
-  return { passed, expect, results }
+  const greenFailures = phase ? countGreenFailures(cwd, phase, passed) : 0
+  const capReached = greenFailures >= GREEN_CAP
+  if (phase) writeHandoff(cwd, cfg, phase, results, passed, capReached ? capMessage(greenFailures) : null)
+  return { passed, expect, results, greenFailures, capReached }
+}
+
+const capMessage = (n) => `RETRY CAP REACHED (${n} failed GREEN runs in a row): stop now, report the failing tests and why to the user, and do not keep editing.`
+
+// Consecutive failed GREEN runs, kept in .commitar/green_failures (untracked, not part of HANDOFF.json).
+// A passing GREEN run, or a run of any other phase, resets it. Only GREEN counts: RED is expected to fail.
+function countGreenFailures(cwd, phase, passed) {
+  const path = join(cwd, ".commitar", "green_failures")
+  let n = 0
+  try { n = Number.parseInt(readFileSync(path, "utf8"), 10) || 0 } catch {}
+  n = phase === "GREEN" && !passed ? n + 1 : 0
+  try {
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, `${n}\n`)
+  } catch {}
+  return n
 }
 
 const NEXT = {
@@ -85,7 +104,7 @@ export function classifyRed(out, cwd) {
   return { ok: true }
 }
 
-function writeHandoff(cwd, cfg, phase, results, passed) {
+function writeHandoff(cwd, cfg, phase, results, passed, capNote) {
   const path = join(cwd, "HANDOFF.json")
   let h = {}
   try { h = JSON.parse(readFileSync(path, "utf8")) } catch {}
@@ -98,7 +117,7 @@ function writeHandoff(cwd, cfg, phase, results, passed) {
   h = {
     ...h, version: 1, project: h.project ?? cfg.name ?? basename(cwd), phase,
     status: passed ? (done ? "done" : "in_progress") : "gate_failed",
-    gates, next: passed ? (phase === "COMMIT" && !done ? "Commit the work, then re-run the COMMIT gate." : NEXT[phase]) : `Fix the failing ${phase} gate.`,
+    gates, next: capNote ?? (passed ? (phase === "COMMIT" && !done ? "Commit the work, then re-run the COMMIT gate." : NEXT[phase]) : `Fix the failing ${phase} gate.`),
   }
   if (spec) h.spec = spec
   if (commits) h.commits = commits
@@ -108,5 +127,6 @@ function writeHandoff(cwd, cfg, phase, results, passed) {
 export function summarize(res) {
   if (res.error) return `GATES ERROR: ${res.error}`
   const lines = res.results.map((r) => `${r.ok ? "PASS" : "FAIL"} ${r.name} (${r.command}) exit=${r.exitCode}${r.ok ? "" : "\n" + r.output}`)
-  return `${res.passed ? "GATES PASSED" : "GATES FAILED"} (expected: ${res.expect})\n${lines.join("\n")}`
+  const cap = res.capReached ? `\n${capMessage(res.greenFailures)}` : ""
+  return `${res.passed ? "GATES PASSED" : "GATES FAILED"} (expected: ${res.expect})\n${lines.join("\n")}${cap}`
 }

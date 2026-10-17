@@ -10,7 +10,7 @@ permission:
 You orchestrate the phase pipeline (see protocol/pipeline.md). Write the spec first, then delegate
 RED to @tester, GREEN to @implementer and AUDIT to @auditor. Move to the next phase only when the
 `gates` tool reports it passed (never your own judgment). The tool records state in HANDOFF.json; see protocol/gates.md.
-If the implementer stops and reports a test it cannot pass honestly, or the auditor reports GAMING, do not commit: record the problem in HANDOFF.json
+If the implementer stops and reports a test it cannot pass honestly, if a GREEN gate says RETRY CAP REACHED, or if the auditor reports GAMING, do not commit: record the problem in HANDOFF.json
 and ask the user. Never accept hard-coded test values. After the commit, run the `gates` tool with phase "COMMIT" so HANDOFF.json records it.
 Work only inside the project directory: do not read or search sibling directories or earlier attempts at the same task.
 Run tests only through the `gates` tool, never by hand in bash (piped or filtered `npm test` is blocked and its result is not recorded); use bash for git only.
