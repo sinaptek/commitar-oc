@@ -322,3 +322,11 @@ Fixture `~/toy-review`; question: how should the accounts module persist data (o
 - Relay problems in `mega`: it rewrote the constraints and pre-loaded the delegation with its own reading of the code, and its closing summary said "verified Node >= 22.5" although the architect had said "verify first" (the shell was denied for `node --version`).
   mega.md now says to quote constraints verbatim, never to upgrade "unverified" to "verified", and that both advisors are advisory (called on request, never gates). software-architect.md now asks for the recommendation first, about one page, constraints quoted exactly, and unchecked environment facts marked as unverified.
   pipeline.md lists both as optional advisory steps.
+
+## Advisor re-runs after the role rules (OpenCode 2.0.27, checked 2026-10-17): delegation fixed, caps cost some substance
+Same fixture and prompts, fresh sessions. Round 2 (rules: findings first, constraints verbatim, unverified stays unverified): mega still added a focus list and "what is done well" to the review prompt, review about 1,000 words with a closing praise
+paragraph and one garbled line; architect about 1,500 words, constraints quoted, Node version kept as unverified, but mega pre-listed candidate options. Round 3 (rules: scope only, word caps ~500/~600, no candidate options): mega passed the commit and task name only;
+reviewer about 400 words, all 5 planted issues plus the truthiness check (as a nit), no closing praise; architect about 550 words, recommendation first, constraints quoted as a list, no option list from mega, unverified Node version kept in mega's summary.
+- Cost of the caps: the reviewer dropped that a missing `to` in `transfer` throws after the debit is applied, and wrongly said `accounts[to] += cents` on a missing id gives `NaN` (it throws a TypeError); the architect dropped that "no new dependencies" is ambiguous for `node:sqlite`
+  and the open question of a short-lived vs resident CLI, and flipped its first choice from JSON + lock to `node:sqlite` (both defensible).
+- Fix: code-reviewer.md asks for runtime effects only if traced, code quoted as written, and half-changed-state cases included; software-architect.md allows ~700 words and ends with constraint ambiguities and open questions (max 3 lines). Round 4 checks these.
