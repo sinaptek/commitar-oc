@@ -330,3 +330,9 @@ reviewer about 400 words, all 5 planted issues plus the truthiness check (as a n
 - Cost of the caps: the reviewer dropped that a missing `to` in `transfer` throws after the debit is applied, and wrongly said `accounts[to] += cents` on a missing id gives `NaN` (it throws a TypeError); the architect dropped that "no new dependencies" is ambiguous for `node:sqlite`
   and the open question of a short-lived vs resident CLI, and flipped its first choice from JSON + lock to `node:sqlite` (both defensible).
 - Fix: code-reviewer.md asks for runtime effects only if traced, code quoted as written, and half-changed-state cases included; software-architect.md allows ~700 words and ends with constraint ambiguities and open questions (max 3 lines). Round 4 checks these.
+
+Round 4 (after the traced-effects and open-questions rules): mega's reviewer prompt was the commit, the files and the user's "Do not fix or change anything" quoted; reviewer about 600 words (cap 500), all 5 planted issues, `transfer` now states that a missing `to` throws after the debit
+(half-changed state), the NaN claim is gone, one praise line; it dropped the truthiness/prototype-key check and did not label inferred outputs as unrun. Architect about 650 words, recommendation first, constraints quoted (mega added one fact: "currently persists with writeFileSync"),
+Node version unverified, ends with three open questions including whether "no new dependencies" permits `node:sqlite`; it did not ask short-lived vs resident CLI, and its `load`/`commit` port over in-memory objects claims correct two-writer behaviour only if the whole
+read-modify-write is one transaction (design gap, judgment not verified). mega added its own technical advice after the verbatim answer; mega.md now limits that closing to unverified items and open questions.
+
