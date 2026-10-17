@@ -10,7 +10,7 @@ Tool-agnostic. Each phase has an owner role and a deterministic exit gate.
 | AUDIT | auditor | tests, lint and typecheck pass; findings addressed |
 | COMMIT | mega | clean tree, one commit per phase |
 
-If the auditor labels a finding DEFECT (a stated requirement broken, user data or input silently lost, or a crash on reasonable input), loop back: tester adds a failing regression test (RED), implementer fixes (GREEN), auditor runs again.
+If the auditor labels a finding DEFECT (a stated requirement broken, user data or input silently lost, or a crash on reasonable input), loop back (only for a DEFECT in this change; pre-existing defects are reported to the user): tester adds a failing regression test (RED), implementer fixes (GREEN), auditor runs again.
 Gates are commands (tests, lint, typecheck), never model opinion. State goes to the HANDOFF file.
 
 ## Advisory steps (optional, never a gate)
