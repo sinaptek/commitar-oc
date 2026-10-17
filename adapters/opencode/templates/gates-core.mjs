@@ -23,7 +23,8 @@ export function runGates({ cwd, only, expect = "pass", phase, timeoutMs = 600000
     const full = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? r.error.message : ""}`.trim()
     let ok = expect === "fail" ? exitCode !== 0 : exitCode === 0
     let note = ""
-    if (expect === "fail" && ok && name === "test") {
+    // RED classification is for the RED phase: a SPEC baseline with no tests at all (exit 5 / "No test files found") is a legitimate "fail".
+    if (expect === "fail" && ok && name === "test" && phase !== "SPEC") {
       const c = classifyRed(full, cwd)
       if (!c.ok) { ok = false; note = `RED REJECTED: ${c.reason}\n` }
     }

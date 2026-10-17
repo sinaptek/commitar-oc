@@ -327,3 +327,14 @@ test("pytest totals: quiet and verbose summaries, errors count as failures, no t
   assert.deepEqual(testTotals(PY_MISSING), { tests: 1, pass: 0, fail: 1 })
   assert.equal(testTotals(PY_NONE), null)
 })
+
+test("SPEC baseline with no tests at all is a legitimate fail; the same output is rejected at RED", () => {
+  const d = proj({ test: `printf 'no tests ran in 0.00s\\n'; exit 5` })
+  assert.equal(runGates({ cwd: d, only: ["test"], expect: "fail", phase: "SPEC" }).passed, true)
+  const r = runGates({ cwd: d, only: ["test"], expect: "fail", phase: "RED" })
+  assert.equal(r.passed, false)
+  assert.match(r.results[0].output, /RED REJECTED: pytest ran no tests/)
+  const v = proj({ test: `printf 'No test files found, exiting with code 1\\n'; exit 1` })
+  assert.equal(runGates({ cwd: v, only: ["test"], expect: "fail", phase: "SPEC" }).passed, true)
+})
+

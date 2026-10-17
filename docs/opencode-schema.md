@@ -389,3 +389,12 @@ pytest 9.1.1 (checked 2026-10-17), gate side first: real output captured for a m
 a `SyntaxError`, any other exception, a fixture error (`ERROR file::test`) and `no tests ran` are `RED REJECTED`. Python cannot tell a missing project module from a missing package by the message, so any `ModuleNotFoundError` is accepted at RED (a missing third-party package would then stop at GREEN). Totals come from the summary line (`1 failed, 1 passed, 1 skipped in 0.01s`; errors count as failures).
 Unit tested with the captured output and run through `runGates` against real pytest in a scratch project (`python -m pytest -q`, so the project root is on `sys.path`). Live OpenCode run: `~/trial/pytest-demo`.
 
+
+
+Live pytest run (`~/trial/pytest-demo`: `shop/money.py` and `shop/cart.py`, about 11 minutes, 42 tests, commit 8460d35; gate `.venv/bin/python -m pytest -q`): the pipeline worked and the DEFECT loop fired a second time. Found and fixed afterwards:
+(1) a bug of mine: the RED classifier also ran for the SPEC phase, so on an empty suite the SPEC gate could not pass with `expect: "pass"` (exit 5) or with `expect: "fail"` (rejected as "ran no tests"), and mega had to stop and ask the user. The classification now runs only outside the SPEC phase; mega.md says an empty suite is `expect: "fail"`.
+(2) the auditor labeled `Money("nan")`, `Money("inf")` and `Money("1e40")` as one DEFECT (raw `decimal.InvalidOperation` instead of the spec's TypeError); mega had the tester skip `1e40` as "unspecified" (narrowing the finding itself), the fix covered nan and inf only, and the re-audit reported no DEFECT, so `Money("1e40")` still leaks `InvalidOperation` (verified by hand).
+mega.md now says to pass the finding whole and ask the user about any part that needs a decision; auditor.md says to re-check every part of an earlier DEFECT on a re-audit.
+(3) the second auditor DEFECT (a re-added item silently drops the new price) quoted a total of 1.00 where the code gives 2.00; the tester caught it. auditor.md now asks it to recompute quoted results or mark them unverified. The user decided "keep the first price"; three regression tests lock it in.
+The gate lines were correct throughout (`tests=2 pass=0 fail=2` for the two collection errors, then 37, 42), and the pytest RED classification accepted the missing `shop` package.
+\n
