@@ -59,7 +59,7 @@ path from HCP to the free-tier loop (needs contract `version: 2`); the paid prod
 
 ## Verdict (2026-10-18)
 All **Must** criteria are met except three that are open or partial:
-- **C6** (merge the HCP branch): open until the pull request is merged.
+- **C6** (merge the HCP branch): open until pull request 1 in commitar-hcp is merged.
 - **B2/B3** (RED classification and counts for runners other than the three covered): partly met. This is acceptable for v1 if the supported runners are stated, which README and `protocol/gates.md` do.
 - **B6** (no gaming): partly met. It is a behavior of free models, so it can only be watched, not proven.
 
