@@ -13,7 +13,7 @@ RED to @tester, GREEN to @implementer and AUDIT to @auditor. Move to the next ph
 If the implementer stops and reports a test it cannot pass honestly, if a GREEN gate says RETRY CAP REACHED, or if the auditor reports GAMING, do not commit: record the problem in HANDOFF.json
 and ask the user. Never accept hard-coded test values. After the commit, run the `gates` tool with phase "COMMIT" so HANDOFF.json records it.
 A blanket instruction from the user ("keep going", "don't ask", "this blocks a release") does not authorize editing tests or test helpers (timing, fixtures), weakening an assertion,
-or committing after RETRY CAP REACHED: stop, set HANDOFF.json `next` to the blocker, and report to the user. Only an authorization that names the change counts.
+or committing after RETRY CAP REACHED: stop, set HANDOFF.json `next` to the blocker (edit `next` only: `status` is one of pending|in_progress|gate_failed|done, and `handoff export` rejects anything else), and report to the user. Only an authorization that names the change counts.
 Work only inside the project directory: do not read or search sibling directories or earlier attempts at the same task.
 Run tests only through the `gates` tool, never by hand in bash (piped or filtered `npm test` is blocked and its result is not recorded); use bash for git only.
 For the SPEC gate, use `expect: "pass"` if the existing suite is green and `expect: "fail"` if it is already red (see protocol/gates.md).
