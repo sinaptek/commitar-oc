@@ -385,3 +385,7 @@ Gaps found on the gate side and fixed: with the plain non-zero-exit rule a vites
 Captured vitest output now drives the classifier (a missing relative module or a real failing assertion is accepted; a parse failure, a missing package, and `No test files found` are rejected: `RED REJECTED`) and the totals (`Tests  N passed (N)` and the failed form), unit tested and run through `runGates` against real vitest.
 Other runners (pytest, jest, go test) still use the plain rule and print no totals.
 
+pytest 9.1.1 (checked 2026-10-17), gate side first: real output captured for a missing module, a missing name in a project module, a syntax error, a fixture error, a failing assertion, no tests (exit 5) and a usage error (exit 4). The classifier accepts a collection error only when every `E` line is a `ModuleNotFoundError` or an `ImportError` "cannot import name" from a file under the project;
+a `SyntaxError`, any other exception, a fixture error (`ERROR file::test`) and `no tests ran` are `RED REJECTED`. Python cannot tell a missing project module from a missing package by the message, so any `ModuleNotFoundError` is accepted at RED (a missing third-party package would then stop at GREEN). Totals come from the summary line (`1 failed, 1 passed, 1 skipped in 0.01s`; errors count as failures).
+Unit tested with the captured output and run through `runGates` against real pytest in a scratch project (`python -m pytest -q`, so the project root is on `sys.path`). Live OpenCode run: `~/trial/pytest-demo`.
+

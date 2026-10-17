@@ -111,6 +111,8 @@ export function testTotals(out) {
     const part = (k) => { const m = new RegExp(`(\\d+) ${k}`).exec(v[1]); return m ? Number(m[1]) : 0 }
     return { tests: Number(v[2]), pass: part("passed"), fail: part("failed") }
   }
+  const py = pytestTotals(out)
+  if (py) return py
   const n = (k) => { const m = new RegExp(`^ℹ ${k} (\\d+)\\s*$`, "m").exec(out); return m ? Number(m[1]) : null }
   const tests = n("tests"), pass = n("pass"), fail = n("fail")
   return tests === null || pass === null || fail === null ? null : { tests, pass, fail }
@@ -121,7 +123,7 @@ export function testTotals(out) {
 // A run without test files (`No test files found`) is not a RED either. Output that is not vitest's keeps the plain non-zero rule.
 function classifyVitestRed(out, cwd) {
   if (/^\s*No test files found/m.test(out)) return { ok: false, reason: "vitest found no test files; RED needs new failing tests" }
-  if (!/^\s*Test Files\s+\d+/m.test(out)) return { ok: true }
+  if (!/^\s*Test Files\s+\d+/m.test(out)) return classifyPytestRed(out, cwd)
   const fileFails = [...out.matchAll(/^\s*FAIL\s+(\S+)\s+\[ \1 \]/gm)].map((m) => m[1])
   const testFails = /^\s*FAIL\s+\S+\s+>\s/m.test(out)
   if (!fileFails.length && !testFails) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
@@ -135,6 +137,40 @@ function classifyVitestRed(out, cwd) {
     }
   }
   return { ok: true }
+}
+
+// pytest: the last line is a summary such as `1 failed, 1 passed in 0.01s` (quiet) or `=== 2 passed in 0.00s ===`.
+const PYTEST_SUMMARY = /^(?:=+ )?((?:\d+ (?:passed|failed|errors?|skipped|xfailed|xpassed|deselected|warnings?)(?:, )?)+|no tests ran) in [\d.]+s(?: \(.+\))?(?: =+)?\s*$/m
+
+// A collection error (`ERROR collecting <file>`) is an acceptable RED only for a missing module (Python cannot tell a missing
+// project module from a missing package, so any ModuleNotFoundError counts) or a missing name in a module under the project.
+// A SyntaxError, any other exception and a fixture/setup error (`ERROR file::test`) mean a broken test file.
+function classifyPytestRed(out, cwd) {
+  if (!PYTEST_SUMMARY.test(out)) return { ok: true }
+  const blocks = out.split(/^_{3,} ERROR collecting .+? _{3,}$/m).slice(1)
+  if (/^ERROR \S+::\S+/m.test(out)) return { ok: false, reason: "a test failed during setup or teardown (fixture error); fix the test file" }
+  const bad = []
+  for (const b of blocks) {
+    const errs = [...b.matchAll(/^E\s+([A-Za-z_.]*(?:Error|Exception)):\s?(.*)$/gm)].map((m) => [m[1], m[2]])
+    const okBlock = errs.length > 0 && errs.every(([kind, msg]) =>
+      kind === "ModuleNotFoundError" ||
+      (kind === "ImportError" && /cannot import name '.+' from '.+' \((.+?)\)/.test(msg) && (() => { const f = /\((.+?)\)\s*$/.exec(msg)?.[1] ?? ""; return f.startsWith(cwd) && !f.includes("site-packages") })()))
+    if (!okBlock) bad.push(errs.map(([k]) => k).join(",") || "unknown error")
+  }
+  if (bad.length) return { ok: false, reason: `test file(s) failed to collect for a reason other than a missing implementation (${bad.join("; ")}); fix the test file` }
+  if (/^no tests ran in /m.test(out) || /^=* ?no tests ran in /m.test(out)) return { ok: false, reason: "pytest ran no tests; RED needs new failing tests" }
+  if (!blocks.length && !/^FAILED /m.test(out)) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
+  return { ok: true }
+}
+
+function pytestTotals(out) {
+  const m = PYTEST_SUMMARY.exec(out)
+  if (!m || m[1] === "no tests ran") return null
+  const c = {}
+  for (const [, n, k] of m[1].matchAll(/(\d+) (passed|failed|errors?|skipped|xfailed|xpassed)/g)) c[k.replace(/s$/, "")] = Number(n)
+  const g = (k) => c[k] ?? 0
+  const tests = g("passed") + g("failed") + g("error") + g("skipped") + g("xfailed") + g("xpassed")
+  return { tests, pass: g("passed"), fail: g("failed") + g("error") }
 }
 
 function writeHandoff(cwd, cfg, phase, results, passed, capNote) {

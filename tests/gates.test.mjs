@@ -265,3 +265,65 @@ test("vitest RED through runGates: parse failure is rejected, missing module acc
   assert.match(run(VT_PARSE).results[0].output, /RED REJECTED/)
   assert.equal(run(VT_MISSING).passed, true)
 })
+
+// pytest 9.1.1 output captured from real runs.
+const PY_MISSING = `==================================== ERRORS ====================================
+__________________________ ERROR collecting test_a.py __________________________
+ImportError while importing test module '/proj/test_a.py'.
+Traceback:
+test_a.py:1: in <module>
+    from slugger import slugify
+E   ModuleNotFoundError: No module named 'slugger'
+=========================== short test summary info ============================
+ERROR test_a.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.07s
+`
+const PY_NAME = PY_MISSING.replace("ModuleNotFoundError: No module named 'slugger'", "ImportError: cannot import name 'slugify' from 'slugger' (/proj/slugger.py)")
+const PY_NAME_FOREIGN = PY_NAME.replace("/proj/slugger.py", "/usr/lib/python3/site-packages/slugger.py")
+const PY_SYNTAX = `__________________________ ERROR collecting test_a.py __________________________
+E     File "/proj/test_a.py", line 1
+E       def test_x(): assert (1 +
+E   SyntaxError: '(' was never closed
+=========================== short test summary info ============================
+ERROR test_a.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.13s
+`
+const PY_ASSERT = `F.                                                                       [100%]
+=================================== FAILURES ===================================
+E   assert 1 == 2
+test_a.py:1: AssertionError
+=========================== short test summary info ============================
+FAILED test_a.py::test_x - assert 1 == 2
+1 failed, 1 passed, 1 skipped in 0.01s
+`
+const PY_FIXTURE = `E   RuntimeError: boom
+=========================== short test summary info ============================
+ERROR test_a.py::test_x - RuntimeError: boom
+1 error in 0.01s
+`
+const PY_NONE = `
+
+no tests ran in 0.00s
+`
+
+test("pytest RED: accepts a missing module, a missing name in a project module and a failing assertion", () => {
+  assert.deepEqual(classifyRed(PY_MISSING, "/proj"), { ok: true })
+  assert.deepEqual(classifyRed(PY_NAME, "/proj"), { ok: true })
+  assert.deepEqual(classifyRed(PY_ASSERT, "/proj"), { ok: true })
+})
+
+test("pytest RED: rejects a syntax error, a name missing from a foreign module, a fixture error and a run without tests", () => {
+  assert.match(classifyRed(PY_SYNTAX, "/proj").reason, /failed to collect.*SyntaxError/)
+  assert.equal(classifyRed(PY_NAME_FOREIGN, "/proj").ok, false)
+  assert.match(classifyRed(PY_FIXTURE, "/proj").reason, /fixture error/)
+  assert.match(classifyRed(PY_NONE, "/proj").reason, /ran no tests/)
+})
+
+test("pytest totals: quiet and verbose summaries, errors count as failures, no tests gives none", () => {
+  assert.deepEqual(testTotals(PY_ASSERT), { tests: 3, pass: 1, fail: 1 })
+  assert.deepEqual(testTotals("============================== 2 passed in 0.00s ===============================\n"), { tests: 2, pass: 2, fail: 0 })
+  assert.deepEqual(testTotals(PY_MISSING), { tests: 1, pass: 0, fail: 1 })
+  assert.equal(testTotals(PY_NONE), null)
+})

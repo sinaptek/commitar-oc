@@ -76,7 +76,7 @@ Clone them into those paths to use the installers; generated projects never depe
 
 ## Known limits
 
-- RED is classified for `node:test` and `vitest` (syntax or parse errors and bad imports are rejected; a missing implementation is accepted; vitest with no test files is rejected). Other runners keep the plain non-zero-exit rule; see `protocol/gates.md`.
+- RED is classified for `node:test`, `vitest` and `pytest` (syntax or parse errors and bad imports are rejected; a missing implementation is accepted; vitest and pytest runs with no tests are rejected; pytest cannot tell a missing project module from a missing package, so any ModuleNotFoundError counts as a missing implementation). Other runners keep the plain non-zero-exit rule; see `protocol/gates.md`.
 - The OpenCode adapter in obsidian-second-brain is marked deprecated upstream (works, may need replacing).
 - CI (`.github/workflows/ci.yml`) runs `npm test` on OpenCode 1.19.0 and Node 24 (passing); CI only validates config; tool loading was checked by hand on both 1.19.0 and 2.0.27 (needs live model calls). Repo: https://github.com/sinaptek/commitar-oc
 
