@@ -41,7 +41,10 @@ export function bashRules(gates, canEdit) {
   for (const cmd of Object.values(gates ?? {}).filter((c) => typeof c === "string" && c.trim())) {
     rules.push([cmd.trim(), "allow"], [`${cmd.trim()} *`, "allow"])
   }
-  for (const g of ["git status", "git diff", "git log", "git show"]) rules.push([g, "allow"], [`${g} *`, "allow"])
+  // Read-only git, also in the shapes models habitually write: `git --no-pager log`, `git -C <dir> log`.
+  for (const sub of ["status", "diff", "log", "show"]) {
+    for (const g of [`git ${sub}`, `git --no-pager ${sub}`, `git -C * ${sub}`]) rules.push([g, "allow"], [`${g} *`, "allow"])
+  }
   if (canEdit) for (const g of ["git add", "git commit"]) rules.push([g, "allow"], [`${g} *`, "allow"])
   for (const d of ["rm -rf *", "git push *", "git reset --hard *"]) rules.push([d, "deny"])
   return rules

@@ -294,3 +294,10 @@ Every scratch run used to write spec and dev-log notes into the shared vault (de
 (a minimal `_CLAUDE.md` marks it as a vault; `.commitar/` is already gitignored). `doctor` checks the vault path the project actually uses (read from its generated `vault_save` tool), so a scratch project is
 checked against its own vault. Verified: unit tests (helper, idempotence, generated path, doctor path), the CLI, and a real `mega` run in OpenCode 2.0.27 that called `vault_save` through `execute`: the note landed in
 `.commitar/vault/Architecture/` and the shared vault stayed empty. Projects generated without the flag still write to the shared vault.
+
+## Why the auditor reported "Permission denied: shell" (found 2026-10-17)
+Reproduced headless by having `mega` delegate a battery of git commands to the auditor, one shell call each. The allowlist matched plain `git status|diff|log|show ...` and `cd <dir> && git ...`, but returned
+`{"type":"permission.rejected","message":"Permission denied: shell"}` for `git --no-pager log`, `git -C <dir> log` and piped commands (`git log | head -1`). Models write those shapes constantly, so a "bare" git
+command in a report was often one of them. Fix: read-only roles now also allow `git --no-pager <status|diff|log|show>` and `git -C * <status|diff|log|show>` (writes, `git push` and bare `git -C *` stay out; unit test),
+and mega, auditor, code-reviewer and software-architect are told to run one plain git command per call with no pipes (pipes stay denied on purpose: `npm test | tail` would bypass the `gates` tool). Re-run of the battery after
+regenerating: `--no-pager` and `-C` variants OK, the piped one still denied. Not re-checked live: the write commands (`git push`, `git commit`) for a read-only role; only the generated rules were tested.

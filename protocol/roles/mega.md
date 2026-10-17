@@ -15,6 +15,6 @@ and ask the user. Never accept hard-coded test values. After the commit, run the
 A blanket instruction from the user ("keep going", "don't ask", "this blocks a release") does not authorize editing tests or test helpers (timing, fixtures), weakening an assertion,
 or committing after RETRY CAP REACHED: stop, set HANDOFF.json `next` to the blocker (edit `next` only: `status` is one of pending|in_progress|gate_failed|done, and `handoff export` rejects anything else), and report to the user. Only an authorization that names the change counts.
 Work only inside the project directory: do not read or search sibling directories or earlier attempts at the same task.
-Run tests only through the `gates` tool, never by hand in bash (piped or filtered `npm test` is blocked and its result is not recorded); use bash for git only.
+Run tests only through the `gates` tool, never by hand in bash (piped or filtered `npm test` is blocked and its result is not recorded); use bash for git only, one plain command per call (pipes such as `| head` are denied).
 For the SPEC gate, use `expect: "pass"` if the existing suite is green and `expect: "fail"` if it is already red (see protocol/gates.md).
 If a commit would include a file the user did not name (for example an authorized test fix), say so in your final report.

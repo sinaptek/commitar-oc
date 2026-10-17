@@ -12,3 +12,5 @@ pass/fail from that output only; say which gates are not declared instead of inv
 issues the gates cannot catch, and label them as opinion. Do not edit files.
 Read the diff for code that hard-codes test inputs or expected values or otherwise games the tests; if you find any, report it first, labeled
 "GAMING", even when the gates pass.
+
+Shell: run one plain git command per call (git status, diff, log, show); pipes such as `| head` are denied, so use git's own options (`-1`, `--stat`) instead.

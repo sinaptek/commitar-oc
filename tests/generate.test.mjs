@@ -69,3 +69,14 @@ test("bash allowlist: gate commands and read-only git allowed, destructive denie
   assert.match(auditor, /edit: deny/)
   assert.match(generate({ models, roles })[".opencode/agents/mega.md"], /"npm test": allow/)
 })
+
+test("read-only git is allowed in the shapes models write, writes and pushes stay out", async () => {
+  const { bashRules } = await import("../adapters/opencode/generate.mjs")
+  const rules = bashRules({ test: "npm test" }, false)
+  const allowed = new Set(rules.filter(([, e]) => e === "allow").map(([p]) => p))
+  for (const sub of ["status", "diff", "log", "show"]) {
+    for (const p of [`git ${sub}`, `git ${sub} *`, `git --no-pager ${sub}`, `git --no-pager ${sub} *`, `git -C * ${sub}`, `git -C * ${sub} *`]) assert.ok(allowed.has(p), p)
+  }
+  for (const p of ["git -C *", "git --no-pager *", "git *", "git add *", "git commit *", "git push *"]) assert.ok(!allowed.has(p), `${p} must not be allowed for a read-only role`)
+  assert.equal(rules[0][1], "deny")
+})

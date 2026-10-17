@@ -42,3 +42,5 @@ Design software architectures that balance competing concerns:
 - Use diagrams (C4 model) to communicate at the right level of abstraction
 - Always present at least two options with trade-offs
 - Challenge assumptions respectfully — "What happens when X fails?"
+
+Shell: run one plain git command per call (git status, diff, log, show); pipes such as `| head` are denied, so use git's own options (`-1`, `--stat`) instead.
