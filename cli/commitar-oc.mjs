@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import { generate, loadRoles } from "../adapters/opencode/generate.mjs"
 import { doctor, format, isToolRepo, projectVaultPath } from "./doctor.mjs"
-import { exportHandoff } from "./handoff.mjs"
+import { exportHandoff, pushHandoff } from "./handoff.mjs"
 import { addPersona } from "./personas.mjs"
 import { initVault, initScratchVault } from "./vault.mjs"
 
@@ -67,13 +67,24 @@ function runDoctor(args) {
   process.exit(results.every((r) => r.ok) ? 0 : 1)
 }
 
-function runHandoff(args) {
+async function runHandoff(args) {
   const [sub, ...a] = args
-  if (sub !== "export") { console.error("usage: commitar-oc handoff export [dir] [--out dir]"); process.exit(1) }
+  const usage = "usage: commitar-oc handoff export [dir] [--out dir] | handoff push [dir] [--url <hcp base url>] [--token <token>] [--allow-http]"
+  if (sub !== "export" && sub !== "push") { console.error(usage); process.exit(1) }
+  const valued = ["--out", "--url", "--token"]
+  const flag = (n) => { const i = a.indexOf(n); return i >= 0 ? a[i + 1] : undefined }
+  const dir = resolve(a.find((x, i) => !x.startsWith("--") && !(i > 0 && valued.includes(a[i - 1]))) ?? ".")
+  if (sub === "push") {
+    // The token is better read from the environment: a flag shows up in the process list and shell history.
+    const r = await pushHandoff({ dir, url: flag("--url") ?? process.env.COMMITAR_HCP_URL, token: flag("--token") ?? process.env.COMMITAR_HCP_TOKEN, allowHttp: a.includes("--allow-http") })
+    if (r.error) { console.error(r.error); process.exit(1) }
+    r.warnings.forEach((w) => console.warn(`warn: ${w}`))
+    const x = r.result
+    console.log(`pushed to ${r.target}: ${x.workItemId ?? r.json.project} ${x.changed === false ? "(unchanged, already imported)" : "(imported)"}${x.decisionRequestId ? `, decision requested: ${x.decisionRequestId}` : ""}`)
+    return
+  }
   const oi = a.indexOf("--out")
-  const outDir = oi >= 0 ? resolve(a[oi + 1]) : undefined
-  const dir = resolve(a.find((x, i) => !x.startsWith("--") && (oi < 0 || i !== oi + 1)) ?? ".")
-  const r = exportHandoff({ dir, outDir })
+  const r = exportHandoff({ dir, outDir: oi >= 0 ? resolve(a[oi + 1]) : undefined })
   if (r.error) { console.error(r.error); process.exit(1) }
   r.warnings.forEach((w) => console.warn(`warn: ${w}`))
   console.log(`exported to ${r.out}`)
@@ -103,7 +114,7 @@ function runVault(args) {
 const [cmd, ...rest] = process.argv.slice(2)
 if (cmd === "init") init(resolve(rest.find((a) => !a.startsWith("--")) ?? "."), { scratchVault: rest.includes("--scratch-vault") })
 else if (cmd === "doctor") runDoctor(rest)
-else if (cmd === "handoff") runHandoff(rest)
+else if (cmd === "handoff") await runHandoff(rest)
 else if (cmd === "persona") runPersona(rest)
 else if (cmd === "vault") runVault(rest)
-else { console.error("usage: commitar-oc init [dir] [--scratch-vault] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | persona add <slug...> | vault init"); process.exit(cmd ? 1 : 0) }
+else { console.error("usage: commitar-oc init [dir] [--scratch-vault] | doctor [dir] [--no-smoke] | handoff export [dir] [--out dir] | handoff push [dir] [--url u] | persona add <slug...> | vault init"); process.exit(cmd ? 1 : 0) }

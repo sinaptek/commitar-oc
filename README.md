@@ -41,6 +41,7 @@ Free models are slow and can stall: allow minutes per phase. OpenCode 2.x: use `
 | `init [dir] [--scratch-vault]` | Generate OpenCode config, agents and tools from `protocol/` + `models.json`; validate with `opencode debug config`. `--scratch-vault` points `vault_save` at `<dir>/.commitar/vault` (gitignored) instead of the shared vault: use it for test and scratch runs |
 | `doctor [dir] [--no-smoke]` | Check OpenCode (version-aware: v2 plugin vs v1 tools), generated files, `commitar.json`, config validity, each model alias (60 s call), vault, proxy |
 | `handoff export [dir] [--out dir]` | Validate `HANDOFF.json` against `protocol/handoff.schema.json`, add git state, write json + md |
+| `handoff push [dir] [--url u] [--token t] [--allow-http]` | Build the same bundle and POST it to commitar-hcp (`<url>/api/handoffs`); `--url` / `COMMITAR_HCP_URL`, token from `COMMITAR_HCP_TOKEN` (preferred over the flag). Refuses to send a token over plain http to a non-local host unless `--allow-http`. One way: nothing is read back |
 | `persona add <slug...>` | Copy and trim a persona from the vendored agency-agents into `protocol/roles/` (read-only by default) |
 | `vault init` | Bootstrap the shared vault and install the command subset from `vault.json` |
 

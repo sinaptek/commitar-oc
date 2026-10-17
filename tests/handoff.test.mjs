@@ -3,7 +3,8 @@ import assert from "node:assert/strict"
 import { mkdtempSync, writeFileSync, readFileSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { validateHandoff, buildBundle, exportHandoff } from "../cli/handoff.mjs"
+import { createServer } from "node:http"
+import { validateHandoff, buildBundle, exportHandoff, pushHandoff } from "../cli/handoff.mjs"
 
 const ok = { version: 1, project: "p", phase: "AUDIT", status: "in_progress", gates: [{ command: "t", passed: true }] }
 const noGit = () => ({ ok: false, out: "" })
@@ -98,4 +99,71 @@ test("markdown labels gates by phase and marks RED as expected fail", () => {
   assert.match(md, /- PASS RED `t` \(expected fail\)/)
   assert.match(md, /- FAIL GREEN `t`\n/)
   assert.match(md, /Output of GREEN `t`/)
+})
+
+// handoff push, against a real local HTTP server
+const hcp = async (handler, fn) => {
+  const seen = []
+  const srv = createServer((req, res) => {
+    let body = ""
+    req.on("data", (c) => (body += c))
+    req.on("end", () => { seen.push({ method: req.method, url: req.url, auth: req.headers.authorization, body }); handler(req, res, seen) })
+  })
+  await new Promise((r) => srv.listen(0, "127.0.0.1", r))
+  try { return await fn(`http://127.0.0.1:${srv.address().port}`, seen) } finally { srv.close() }
+}
+const reply = (code, obj) => (req, res) => { res.writeHead(code, { "content-type": "application/json" }); res.end(JSON.stringify(obj)) }
+
+test("push sends the exported bundle (with git state) to /api/handoffs with the bearer token", async () => {
+  await hcp(reply(200, { workItemId: "oc:p", changed: true, decisionRequestId: null }), async (url, seen) => {
+    const r = await pushHandoff({ dir: proj(ok, "# spec"), url, token: "tok", run: gitRun(false) })
+    assert.equal(r.error, undefined)
+    assert.deepEqual(r.result, { workItemId: "oc:p", changed: true, decisionRequestId: null })
+    assert.equal(seen.length, 1)
+    assert.equal(seen[0].method, "POST")
+    assert.equal(seen[0].url, "/api/handoffs")
+    assert.equal(seen[0].auth, "Bearer tok")
+    const sent = JSON.parse(seen[0].body)
+    assert.equal(sent.project, "p")
+    assert.equal(sent.git.head, "abc123")
+    assert.ok(sent.exportedAt)
+  })
+})
+
+test("push sends no authorization header without a token", async () => {
+  await hcp(reply(200, {}), async (url, seen) => {
+    await pushHandoff({ dir: proj(ok), url, run: noGit })
+    assert.equal(seen[0].auth, undefined)
+  })
+})
+
+test("push reports the server's error for a 400 and a 401", async () => {
+  await hcp(reply(400, { error: "Not a valid HANDOFF v1: version" }), async (url) => {
+    assert.match((await pushHandoff({ dir: proj(ok), url, run: noGit })).error, /answered 400: Not a valid HANDOFF v1/)
+  })
+  await hcp(reply(401, { error: "Unauthorized" }), async (url) => {
+    assert.match((await pushHandoff({ dir: proj(ok), url, run: noGit })).error, /answered 401: Unauthorized/)
+  })
+})
+
+test("push does not send an invalid or missing HANDOFF.json", async () => {
+  await hcp(reply(200, {}), async (url, seen) => {
+    assert.match((await pushHandoff({ dir: proj(), url, run: noGit })).error, /not found/)
+    assert.match((await pushHandoff({ dir: proj({ version: 1 }), url, run: noGit })).error, /invalid/)
+    assert.equal(seen.length, 0)
+  })
+})
+
+test("push fails clearly on a missing or bad url, an unreachable server, and a token over plain http to a remote host", async () => {
+  const dir = proj(ok)
+  assert.match((await pushHandoff({ dir, run: noGit })).error, /no HCP url/)
+  assert.match((await pushHandoff({ dir, url: "nope", run: noGit })).error, /not a valid url/)
+  assert.match((await pushHandoff({ dir, url: "ftp://x", run: noGit })).error, /http or https/)
+  assert.match((await pushHandoff({ dir, url: "http://127.0.0.1:1", run: noGit, timeoutMs: 3000 })).error, /could not reach/)
+  let called = false
+  const spy = async () => { called = true; return { ok: true, text: async () => "{}" } }
+  assert.match((await pushHandoff({ dir, url: "http://hcp.example.com", token: "t", fetchImpl: spy, run: noGit })).error, /refusing to send the token/)
+  assert.equal(called, false)
+  assert.equal((await pushHandoff({ dir, url: "http://hcp.example.com", token: "t", allowHttp: true, fetchImpl: spy, run: noGit })).error, undefined)
+  assert.equal((await pushHandoff({ dir, url: "https://hcp.example.com", token: "t", fetchImpl: spy, run: noGit })).error, undefined)
 })

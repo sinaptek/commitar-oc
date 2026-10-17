@@ -101,3 +101,32 @@ export function exportHandoff({ dir, outDir, ...opts }) {
   writeFileSync(join(out, "handoff.md"), b.md)
   return { ...b, out }
 }
+
+const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]", "::1"])
+
+// handoff push: send the same bundle `export` builds to commitar-hcp (POST <url>/api/handoffs). One way; nothing is read back into the project.
+export async function pushHandoff({ dir, url, token, allowHttp = false, fetchImpl = fetch, timeoutMs = 15000, ...opts }) {
+  if (!url) return { error: "no HCP url: pass --url or set COMMITAR_HCP_URL" }
+  let target
+  try { target = new URL("/api/handoffs", url) } catch { return { error: `not a valid url: ${url}` } }
+  if (!/^https?:$/.test(target.protocol)) return { error: `url must be http or https: ${url}` }
+  if (token && target.protocol === "http:" && !LOOPBACK.has(target.hostname) && !allowHttp) {
+    return { error: "refusing to send the token over plain http to a non-local host (use https, or --allow-http)" }
+  }
+  const b = buildBundle({ dir, ...opts })
+  if (b.error) return b
+  let res
+  try {
+    res = await fetchImpl(target, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(b.json),
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+  } catch (e) { return { error: `could not reach ${target.origin}: ${e.cause?.code ?? e.message}` } }
+  const text = await res.text()
+  let body
+  try { body = JSON.parse(text) } catch { body = null }
+  if (!res.ok) return { error: `HCP answered ${res.status}: ${body?.error ?? (text.slice(0, 200) || res.statusText)}` }
+  return { ...b, result: body ?? {}, target: target.href }
+}
