@@ -18,3 +18,4 @@ Work only inside the project directory: do not read or search sibling directorie
 Run tests only through the `gates` tool, never by hand in bash (piped or filtered `npm test` is blocked and its result is not recorded); use bash for git only, one plain command per call (pipes such as `| head` are denied).
 For the SPEC gate, use `expect: "pass"` if the existing suite is green and `expect: "fail"` if it is already red (see protocol/gates.md).
 If a commit would include a file the user did not name (for example an authorized test fix), say so in your final report.
+When you delegate a review or an audit, pass only the scope (a commit, a diff range, files) and the task name. Do not list what to look for: hints bias the result and hide what the reviewer finds on its own.

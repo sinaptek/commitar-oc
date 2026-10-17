@@ -301,3 +301,14 @@ Reproduced headless by having `mega` delegate a battery of git commands to the a
 command in a report was often one of them. Fix: read-only roles now also allow `git --no-pager <status|diff|log|show>` and `git -C * <status|diff|log|show>` (writes, `git push` and bare `git -C *` stay out; unit test),
 and mega, auditor, code-reviewer and software-architect are told to run one plain git command per call with no pipes (pipes stay denied on purpose: `npm test | tail` would bypass the `gates` tool). Re-run of the battery after
 regenerating: `--no-pager` and `-C` variants OK, the piped one still denied. Not re-checked live: the write commands (`git push`, `git commit`) for a read-only role; only the generated rules were tested.
+
+## code-reviewer with seeded defects (OpenCode 2.0.27, checked 2026-10-17): works as an advisory step
+Fixture `~/toy-review`: one commit adding a 40-line accounts module with 3 planted blockers (SQL built by string interpolation, `transfer` with no validation, `save` that swallows write errors), 2 suggestions
+(duplicated validation, missing tests) and a clean control (`formatMoney`). `mega` delegated "review the last commit" to `@code-reviewer`; about 2 minutes.
+- Found all 5, ranked correctly (3 blockers, the rest suggestions), plus a real defect that was not planted: `accounts[id]` truthiness lets `deposit(accounts, "__proto__", 100)` set `Object.prototype.balance = NaN`
+  (reproduced). Every file:line it cited was right, and its claims about `formatMoney(1.5)`, `NaN` and `-0` were reproduced. It edited nothing (the working tree was unchanged).
+- Weaknesses: very long for 40 lines, with praise and an encouragement closing written for human pull requests; one garbled nit ("catch (e) shadows the outer e in the commit's diff context style"); its suggested
+  `transfer` fix returns early on `from === to` before the existence check; it raised the clean `formatMoney` control as a suggestion for out-of-contract input (non-integers), a soft false alarm.
+- Not a blind test: `mega`'s delegation prompt listed things to look at (negative amounts, insufficient funds, persistence), taken from the commit title and generic review topics. The SQL injection and the swallowed error
+  were not hinted. mega.md now says to pass only the scope when delegating a review or audit, and code-reviewer.md now asks for findings first, plain ASCII labels, no invented problems, and no encouragement closing.
+- Not checked: whether the reviewer's own git calls were ever denied (the log shows only its final text).
