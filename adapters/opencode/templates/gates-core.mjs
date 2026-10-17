@@ -27,7 +27,7 @@ export function runGates({ cwd, only, expect = "pass", phase, timeoutMs = 600000
       const c = classifyRed(full, cwd)
       if (!c.ok) { ok = false; note = `RED REJECTED: ${c.reason}\n` }
     }
-    return { name, command, exitCode, ok, output: (note + full.slice(-TAIL)).slice(0, TAIL + note.length) }
+    return { name, command, exitCode, ok, totals: testTotals(full), output: (note + full.slice(-TAIL)).slice(0, TAIL + note.length) }
   })
   const passed = results.length > 0 && results.every((r) => r.ok)
   const greenFailures = phase ? countGreenFailures(cwd, phase, passed) : 0
@@ -104,6 +104,13 @@ export function classifyRed(out, cwd) {
   return { ok: true }
 }
 
+// Test totals from node:test's summary lines, so the report quotes counts the runner printed. Other runners: null.
+export function testTotals(out) {
+  const n = (k) => { const m = new RegExp(`^ℹ ${k} (\\d+)\\s*$`, "m").exec(out); return m ? Number(m[1]) : null }
+  const tests = n("tests"), pass = n("pass"), fail = n("fail")
+  return tests === null || pass === null || fail === null ? null : { tests, pass, fail }
+}
+
 function writeHandoff(cwd, cfg, phase, results, passed, capNote) {
   const path = join(cwd, "HANDOFF.json")
   let h = {}
@@ -126,7 +133,7 @@ function writeHandoff(cwd, cfg, phase, results, passed, capNote) {
 
 export function summarize(res) {
   if (res.error) return `GATES ERROR: ${res.error}`
-  const lines = res.results.map((r) => `${r.ok ? "PASS" : "FAIL"} ${r.name} (${r.command}) exit=${r.exitCode}${r.ok ? "" : "\n" + r.output}`)
+  const lines = res.results.map((r) => `${r.ok ? "PASS" : "FAIL"} ${r.name} (${r.command}) exit=${r.exitCode}${r.totals ? ` tests=${r.totals.tests} pass=${r.totals.pass} fail=${r.totals.fail}` : ""}${r.ok ? "" : "\n" + r.output}`)
   const cap = res.capReached ? `\n${capMessage(res.greenFailures)}` : ""
   return `${res.passed ? "GATES PASSED" : "GATES FAILED"} (expected: ${res.expect})\n${lines.join("\n")}${cap}`
 }

@@ -180,3 +180,18 @@ test("retry cap: a pass or another phase resets the count; RED failures and phas
   for (let i = 0; i < 5; i++) assert.equal(runGates({ cwd: d }).capReached, false)
   assert.equal(runGates({ cwd: d, phase: "GREEN" }).greenFailures, 1)
 })
+
+import { testTotals } from "../adapters/opencode/templates/gates-core.mjs"
+
+test("test totals come from node:test's summary lines and appear in the gate summary", () => {
+  assert.deepEqual(testTotals("ℹ tests 100\nℹ suites 18\nℹ pass 98\nℹ fail 2\nℹ cancelled 0\n"), { tests: 100, pass: 98, fail: 2 })
+  assert.equal(testTotals("ok\n"), null)
+  const d = mkdtempSync(join(tmpdir(), "gates-totals-"))
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "printf 'ℹ tests 7\\nℹ pass 7\\nℹ fail 0\\n'" } }))
+  const r = runGates({ cwd: d })
+  assert.deepEqual(r.results[0].totals, { tests: 7, pass: 7, fail: 0 })
+  assert.match(summarize(r), /PASS test \(.*\) exit=0 tests=7 pass=7 fail=0/)
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "echo plain" } }))
+  assert.doesNotMatch(summarize(runGates({ cwd: d })), /tests=/)
+})
+

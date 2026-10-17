@@ -20,6 +20,7 @@ A project declares its deterministic gates in `commitar.json` at its root:
   handoff write (baseline in `.commitar/base`), `next`, and `status` (`done` only after a passing COMMIT gate with a commit).
   `init` adds `HANDOFF.json` and `.commitar/` to the project's `.gitignore`.
 - Agents never decide a gate's result; they only report the tool's output.
+- For node:test, each result line also carries the runner's own totals (`tests=N pass=M fail=K`). Quote those numbers in reports; never compute or remember a test count.
 
 ## RED check
 `expect: "fail"` on the `test` gate is classified, not just "non-zero exit" (node:test output only; other
