@@ -23,6 +23,8 @@ Full rationale: `docs/design-notes.md` (read it first).
   Also tried on a real greenfield repo (gestor-de-tareas: core, CLI and four bug fixes, 106 tests): see the trial summary at the end of docs/opencode-schema.md.
 - Open: HCP side exists as a pinned contract package (branch handoff-contract in commitar-hcp, unpushed), the HCP side ingests handoffs (pure `ingestHandoff` mapper plus `CommitarNextAdapter` and `POST /api/handoffs`, pushed on branch handoff-contract; the HCP web UI lists open decision requests and records the human decision); RED is classified for node:test, vitest and pytest (other runners: non-zero exit), CI passes on 1.19.0 (config validation only; runtime checked by hand on 1.19.0 and 2.0.27; repo is public at github.com/sinaptek/commitar-oc), `handoff push` sends a handoff to HCP (tested against a local server and the real HCP server; no HCP is deployed anywhere yet).
 
+Acceptance criteria for v1 are in `docs/acceptance-criteria.md` (Must/Should, status and evidence for each).
+
 ## Rules
 - Validate generated config with `opencode debug config` (locally installed: 2.0.27, which ignores `.opencode/tools`; tools are generated as a v2 plugin too. CI pins 1.19.0; both versions verified at runtime, see docs/opencode-schema.md). Known past errors: `permission` vs `permissions`, `sse` type, `mcp` vs `remote`.
 - AUDIT must rest on deterministic gates (tests, lint, typecheck), since free models judge poorly.
