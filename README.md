@@ -20,13 +20,16 @@ Needs Node 24 (the version tested) and OpenCode (`npm i -g opencode-ai`). Defaul
 
 ```bash
 node cli/commitar-oc.mjs init ~/my-project     # writes opencode.json, .opencode/, commitar.json; validates with OpenCode
-# edit ~/my-project/commitar.json so "test" is the project's real test command
+# edit ~/my-project/commitar.json: "test" is the project's real test command, "probe" is how the auditor runs a snippet ("node {file}", ".venv/bin/python {file}")
 node cli/commitar-oc.mjs doctor ~/my-project   # checks install, config, models (live call), vault
 cd ~/my-project && opencode                    # primary agent is mega
 node cli/commitar-oc.mjs handoff export ~/my-project   # -> .commitar/handoff/{handoff.json,handoff.md}
 ```
 
 Agents may run only the project's gate commands and read-only git without asking (plus `git add`/`commit` where they may edit; roles that cannot edit, such as the auditor, get no other shell access); `rm -rf`, `git push` and `git reset --hard` are denied and everything else asks. Re-run `init` after editing `commitar.json`.
+
+The auditor also gets a `probe` tool: it runs a short snippet with the project's own interpreter (`commitar.json` `probe`) in a throwaway copy of the project, so a suspected defect is checked ("executed") instead of only read from code.
+`.git`, `.commitar/`, `HANDOFF.json` and caches are not copied, `node_modules` and `.venv` are linked, the copy is deleted afterwards and the real project is untouched. It is not a sandbox: a snippet that deliberately writes through the linked dependency directories, or uses the network, is not stopped.
 
 Free models are slow and can stall: allow minutes per phase. OpenCode 2.x: use `opencode run --standalone` (the shared background service can hang). Non-interactive `opencode run` hangs on
 `ask` permissions; use `--auto` only in disposable directories.

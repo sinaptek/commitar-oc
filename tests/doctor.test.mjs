@@ -13,9 +13,12 @@ const mkdir = () => {
   mkdirSync(join(d, ".opencode/tools"), { recursive: true })
   mkdirSync(join(d, ".opencode/plugins/commitar"), { recursive: true })
   writeFileSync(join(d, ".opencode/tools/gates.ts"), "")
+  writeFileSync(join(d, ".opencode/tools/probe.ts"), "")
+  mkdirSync(join(d, ".opencode/lib"), { recursive: true })
+  writeFileSync(join(d, ".opencode/lib/probe-core.mjs"), "")
   writeFileSync(join(d, ".opencode/plugins/commitar/index.ts"), "")
   writeFileSync(join(d, "package.json"), "{}")
-  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "npm test" } }))
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "npm test" }, probe: "node {file}" }))
   return d
 }
 const fakeRun = (over = {}) => (cmd, args) => {
@@ -92,7 +95,7 @@ test("commitar.json: missing, invalid and no test gate are flagged", () => {
   assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["commitar.json"])
   writeFileSync(f, "{nope")
   assert.match(doctor({ dir: d, models, run: fakeRun() }).find((r) => r.name === "commitar.json").detail, /invalid JSON/)
-  writeFileSync(f, JSON.stringify({ gates: { lint: "x" } }))
+  writeFileSync(f, JSON.stringify({ gates: { lint: "x" }, probe: "node {file}" }))
   assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["commitar.json"])
 })
 
@@ -109,7 +112,7 @@ test("stale bash allowlist is flagged after commitar.json changes", () => {
   const d = mkdir()
   writeFileSync(join(d, ".opencode/agents/mega.md"), '  bash:\n    "npm test": allow\n')
   assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
-  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "pytest -q" } }))
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "pytest -q" }, probe: "node {file}" }))
   const rs = doctor({ dir: d, models, run: fakeRun() })
   assert.deepEqual(failed(rs), ["bash allowlist"])
   assert.match(rs.find((r) => r.name === "bash allowlist").detail, /pytest -q/)
@@ -119,7 +122,7 @@ test("npm test gate without package.json is flagged", () => {
   const d = mkdir()
   rmSync(join(d, "package.json"))
   assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), ["package.json"])
-  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "node --test" } }))
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "node --test" }, probe: "node {file}" }))
   assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
 })
 
@@ -133,3 +136,14 @@ test("the commitar-oc repo itself is refused as a target", () => {
   assert.deepEqual(failed(rs), ["target is a project"])
   assert.equal(rs.length, 1)
 })
+
+test("a missing probe command is flagged, a declared one passes", () => {
+  const d = mkdir()
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "npm test" } }))
+  const rs = doctor({ dir: d, models, run: fakeRun() })
+  assert.deepEqual(failed(rs), ["probe"])
+  assert.match(rs.find((r) => r.name === "probe").detail, /"probe": "node \{file\}"/)
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: "npm test" }, probe: "python3 {file}" }))
+  assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
+})
+

@@ -46,7 +46,7 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
   }
 
   // OpenCode v2 ignores .opencode/tools and loads custom tools from plugins; v1 is the reverse.
-  const toolFiles = v2 ? [".opencode/plugins/commitar/index.ts"] : [".opencode/tools/gates.ts"]
+  const toolFiles = v2 ? [".opencode/plugins/commitar/index.ts", ".opencode/lib/probe-core.mjs"] : [".opencode/tools/gates.ts", ".opencode/tools/probe.ts"]
   const missingTools = toolFiles.filter((f) => !existsSync(join(dir, f)))
   results.push(missingTools.length ? fail("custom tools registered", `${missingTools.join(", ")} missing for OpenCode ${v2 ? "v2" : "v1"}; run: commitar-oc init`)
     : pass("custom tools registered", v2 ? "v2 plugin" : "v1 tools"))
@@ -58,6 +58,8 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
       : fail("commitar.json", 'no "gates.test" command; a missing test gate always fails'))
     if (/^\s*(npm|pnpm|yarn)\b/.test(g.gates?.test ?? "") && !existsSync(join(dir, "package.json")))
       results.push(fail("package.json", `test gate "${g.gates.test}" needs a package.json with a test script; none found`))
+    results.push(typeof g.probe === "string" && g.probe.includes("{file}") ? pass("probe", `auditor probe: ${g.probe}`)
+      : fail("probe", 'no "probe" command in commitar.json; the auditor cannot run what it suspects (e.g. "probe": "node {file}" or ".venv/bin/python {file}")'))
     // The agents' bash allowlist is generated from the gate commands; editing commitar.json needs a re-run of init.
     const agent = join(dir, ".opencode/agents/mega.md")
     if (existsSync(agent)) {

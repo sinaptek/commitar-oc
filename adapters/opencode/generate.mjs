@@ -65,7 +65,7 @@ export function generate({ models, roles, vault = null, gates = { test: "npm tes
   const vaultNote = `\n\n## Knowledge vault\nAfter the SPEC gate passes, call the \`vault_save\` tool with kind "spec" and a short summary of the spec (goal, acceptance criteria, key decisions). The spec itself stays in the project and the handoff never depends on the vault: if \`vault_save\` reports an error, mention it and continue.`
   // OpenCode v2 exposes custom tools only through `execute`; free models do not infer that.
   const callNote = (text) => {
-    const used = ["gates", "vault_save"].filter((n) => text.includes(`\`${n}\``))
+    const used = ["gates", "vault_save", "probe"].filter((n) => text.includes(`\`${n}\``))
     if (!used.length) return ""
     return `\n\n## Calling the tools\n${used.map((n) => `\`${n}\``).join(" and ")} ${used.length > 1 ? "are" : "is"} called through the \`execute\` tool as \`tools.<name>(args)\`, e.g. \`return await tools.${used[0]}(...)\`. Do not run them with bash; if \`execute\` is missing, say so instead of running the commands yourself.`
   }
@@ -84,6 +84,8 @@ export function generate({ models, roles, vault = null, gates = { test: "npm tes
   }
   files[".opencode/lib/gates-core.mjs"] = readFileSync(join(templates, "gates-core.mjs"), "utf8")
   files[".opencode/tools/gates.ts"] = readFileSync(join(templates, "gates.ts"), "utf8")
+  files[".opencode/lib/probe-core.mjs"] = readFileSync(join(templates, "probe-core.mjs"), "utf8")
+  files[".opencode/tools/probe.ts"] = readFileSync(join(templates, "probe.ts"), "utf8")
   if (vault) {
     files[".opencode/lib/vault-core.mjs"] = readFileSync(join(templates, "vault-core.mjs"), "utf8")
     files[".opencode/tools/vault_save.ts"] = readFileSync(join(templates, "vault.ts"), "utf8").replace("__VAULT_PATH__", JSON.stringify(vault.path))

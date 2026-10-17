@@ -40,8 +40,8 @@ function init(target, { scratchVault = false } = {}) {
   }
   const cfg = join(target, "commitar.json")
   if (!existsSync(cfg)) {
-    writeFileSync(cfg, JSON.stringify({ name: basename(target), gates: { test: "npm test" } }, null, 2) + "\n")
-    console.log("wrote commitar.json (edit the gate commands)")
+    writeFileSync(cfg, JSON.stringify({ name: basename(target), gates: { test: "npm test" }, probe: "node {file}" }, null, 2) + "\n")
+    console.log("wrote commitar.json (edit the gate commands and the probe command)")
   }
   // Pipeline state must never be committed: HANDOFF.json and .commitar/ are local by design.
   const gi = join(target, ".gitignore")
