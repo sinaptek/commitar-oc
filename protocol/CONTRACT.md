@@ -8,7 +8,7 @@
 - Add a contract test: validate the sample against your copy. Update both copies deliberately.
 - Ignore fields you do not know.
 - Status: commitar-hcp has this as `packages/handoff-contract` (pinned copy at commit 424a563, a Zod schema, drift tests, and a
-  `check-upstream` script that compares its pin with this repo). It also has a pure mapper, `ingestHandoff`, to HCP domain records (WorkItem, OperationRun, Evidence); the server does not call it yet.
+  `check-upstream` script that compares its pin with this repo). `ingestHandoff` maps it to HCP domain records, and the HCP server stores them through `CommitarNextAdapter` (`POST /api/handoffs`, separate from the demo store). The owner confirmed the mapping on 2026-10-18; see `docs/hcp-handoff-questions.md`.
 
 ## Versioning
 - Safe within a version: adding optional fields.

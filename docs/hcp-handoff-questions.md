@@ -1,6 +1,7 @@
 # HANDOFF into paid commitar / HCP: proposals to confirm
 
-Date: 2026-10-17. Status: proposal, nothing is stored or wired. For each point below we give a default and the reason
+Date: 2026-10-17. Status: all five points confirmed by the owner on 2026-10-18 and implemented in commitar-hcp
+(branch `handoff-contract`, `CommitarNextAdapter`); the proposals below are kept as the record of what was agreed. For each point below we give a default and the reason
 for it. The ask is to confirm or change it.
 
 ## What commitar-oc provides
@@ -55,5 +56,6 @@ method on the demo adapter or on `CommitarClient`, so seeded demo records and re
 (`docs/DEMO-TRUTH-BOUNDARY.md`).
 **Confirm or change:** this placement.
 
-## What we need back
-A confirm or a change on each of the five points. Wiring starts only after that.
+## Outcome
+Confirmed as proposed: the status table, one Program per project, `worker-commitar-oc` with `ATTACH_EVIDENCE` only, one-way flow
+where a `gate_failed` or `done` handoff opens a decision for a human, and ingestion behind `CommitarNextAdapter`.
