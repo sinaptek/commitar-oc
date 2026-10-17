@@ -370,3 +370,11 @@ The auditor (fast alias, with the requirement trace) reported no DEFECT and a re
 Two rule leaks remain: mega's tester and implementer prompts again carried suggestions ("the natural place is the per-element validation loop in src/store.js") and mega's final report said 98 tests where the suite has 100 (the gate output shows only PASS/FAIL, not counts, so mega had nothing to read them from);
 the tester and implementer also ran the `gates` tool themselves although mega said it would. Harmless here because the gates decide, but the count is a wrong claim in the report.
 
+Feature 6 on the same project (empty or whitespace-only `TASKS_FILE` is treated as unset; about 6 minutes, 106 tests pass, commit 5b59f64): verified by hand (`""`, three spaces and a tab all read `./tasks.json`; a real path still reads its own store). This is the first run where every count in mega's report matched the `tests=N pass=M fail=K` on the gate lines (100, 106, 106).
+The prompts carried no suggested fix (the implementer prompt still pointed at the file). New slip: before running RED, mega wrote a vault note stating gate results that did not exist yet ("RED gate tests=105 ... Verified"), then noticed and overwrote it with an accurate one; the vault note is one file overwritten on every run, so only the last spec note survives.
+Subagents recorded the gates themselves again (the tester RED, the implementer GREEN, the auditor AUDIT), which is harmless. The audit had no DEFECT, again.
+
+Real-repo trial summary (gestor-de-tareas, greenfield, six runs in about 50 minutes, 106 tests, no stalls): what worked: the SPEC, RED, GREEN, AUDIT, COMMIT pipeline on free models for a multi-file project; the gates decided every phase; the specs stayed in the user's wording; bug fixes were small and verified by hand.
+What did not: the fast auditor found nothing by reading diffs and only found the missing load-path checks once it had to trace each requirement (auditor.md); mega's reports needed the gate to print the runner's counts; mega keeps adding suggestions to delegation prompts and once wrote results it had not seen; the DEFECT loop has never fired on a live run.
+Unverified: any project that is not plain node:test, the audit of a change that really contains a defect, and the paid-commitar side of the handoff.
+

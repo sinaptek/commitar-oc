@@ -20,6 +20,7 @@ Full rationale: `docs/design-notes.md` (read it first).
 - `dev/` and `obsidian-second-brain/` are vendored sources, gitignored (origins in README). Used only by the
   installers; never depend on their paths at runtime. Trim personas, don't load all.
 - Full pipeline verified on a generated project with OpenCode 2.0.27 (real subagents, gates, vault_save), for both a new function and a bug fix on existing code; see docs/opencode-schema.md. Failure path verified (contradictory tests: stops at GREEN, `gate_failed`, no commit); retry cap is enforced by the gates tool (3rd failed GREEN run says stop; unit tested, and a real model stopped on it and mega reported instead of editing the test helper); a wrong test (isPrime(91)) was gamed by hard-coding until the role rules were tightened; rerun stopped and asked the user; vault commands verified in a scratch vault (docs/opencode-schema.md). Never run `opencode` inside this repo: use a separate project dir.
+  Also tried on a real greenfield repo (gestor-de-tareas: core, CLI and four bug fixes, 106 tests): see the trial summary at the end of docs/opencode-schema.md.
 - Open: HCP side exists as a pinned contract package (branch handoff-contract in commitar-hcp, unpushed), no ingest yet; RED is classified for node:test only (other runners: non-zero exit), CI passes on 1.19.0 (config validation only; runtime checked by hand on 1.19.0 and 2.0.27; repo is public at github.com/sinaptek/commitar-oc), handoff not yet consumed by paid commitar.
 
 ## Rules
