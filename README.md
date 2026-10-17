@@ -59,7 +59,9 @@ Generated output is never hand-edited: change `protocol/` or `models.json` and r
 ## Changing models
 
 Edit the two aliases in `models.json` (IDs from `opencode models`). Roles only reference `strong` / `fast`.
-There is no fallback chain in v1. Headroom (context compression, runs on the Windows PC) is not a
+Defaults (checked 2026-10-17): `strong` = `opencode/glm-5.3-flash-free` (mega, implementer), `fast` = `opencode/deepseek-v4.1-flash-free`
+(tester, auditor, code-reviewer, software-architect). Previous pair, kept as the fallback: `opencode/big-pickle` / `opencode/nemotron-3.5-lightning-free`.
+Free models can be retired without notice: run `doctor` before a session. There is no fallback chain in v1. Headroom (context compression, runs on the Windows PC) is not a
 router; to use it set `proxy` in `models.json`.
 
 ## Vendored sources (gitignored, needed only at install time)

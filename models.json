@@ -1,8 +1,8 @@
 {
   "_note": "Single fix point for model IDs (provider/model, see `opencode models`). Roles reference aliases only. Defaults are OpenCode's free models: no API key needed. `proxy` is optional: set it to route a provider through a local proxy such as Headroom (context compression only, not a router).",
   "aliases": {
-    "strong": "opencode/big-pickle",
-    "fast": "opencode/nemotron-3.5-lightning-free"
+    "strong": "opencode/glm-5.3-flash-free",
+    "fast": "opencode/deepseek-v4.1-flash-free"
   },
   "proxy": null
 }

@@ -249,3 +249,10 @@ Because no model run reached the prompt-level cap (see the fixture run above), t
 `RETRY CAP REACHED (n failed GREEN runs in a row): stop now ...` to the tool output and to HANDOFF `next`; further failed runs repeat it; a pass or any other phase resets;
 RED never counts. The count is in `.commitar/green_failures`, so HANDOFF.json and the paid-commitar contract are unchanged. Unit tests cover the count, the reset and the
 HANDOFF validity, and a generated project was checked to contain the code and the updated mega/implementer text. Not yet seen: a real model reacting to the line.
+
+## Default models swapped (decision 2026-10-17)
+`models.json` now defaults to strong = `opencode/glm-5.3-flash-free`, fast = `opencode/deepseek-v4.1-flash-free`; the previous pair (`big-pickle`, `nemotron-3.5-lightning-free`) is the documented fallback.
+Basis: 3 full pipeline runs on the new pair (slug, isPrime(91), daysBetween) with the role rules in place; on both wrong-test cases the implementer stopped and `mega` asked instead of hard-coding, the
+auditor pasted gate output and found no gaming, and `doctor` pings answer in about 2 s (the old pair timed out). Weaknesses seen: `mega` embellishes the spec and once copied a wrong expectation into it.
+Not shown: harder tasks, or an implementer choosing between hard-coding and stopping with no contradiction visible. Safeguards that do not depend on the model: gates, RETRY CAP REACHED, `doctor` smoke ping.
+Revisit after more runs; reverting is one file (`models.json`) plus `init` in each project.
