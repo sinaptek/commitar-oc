@@ -361,3 +361,7 @@ Mega's implementer prompt still named likely touchpoints and the error type (a c
 `TASKS_FILE=""` makes `list` print "No tasks found." and exit 0 (flagged in the feature 2 audit, never fixed); `done 1e0` is accepted as id 1; a whitespace-only title loads (the auditor did list this one as OPINION). The auditor's shell is git-only, so it cannot run the CLI and finds only what it can trace in the code, on the `fast` alias.
 The DEFECT/OPINION loop has still not run live. Experiment: re-audit 6203c5c with the auditor on the `strong` alias (trial clone only).
 
+Auditor experiment (checked 2026-10-17), same commit 6203c5c audited three ways. Fast auditor: no DEFECT. Strong auditor (alias swapped in the trial clone only): no DEFECT and a shorter report, so the model was not the limit (my first run of this test audited the wrong commit, the swap itself; invalid).
+Fast auditor with the new requirement trace (list each SPEC.md and user requirement, name the file:line that enforces it on every path that creates, loads or changes the data, else "NOT ENFORCED on <path>" and a DEFECT): found both defects I had found by hand, duplicate ids accepted on load (SPEC "unique id" not enforced on the load path, `remove 1` deletes both tasks)
+and a whitespace-only title accepted on load (labeled arguable by the auditor itself), with a reproduction command for each (read from code; its shell is git-only). Report about 600 words, no invented requirements. Not reported: `TASKS_FILE=""` (not a stated requirement). auditor.md now carries the trace.
+
