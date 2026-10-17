@@ -14,6 +14,8 @@ Label every finding that is not GAMING as DEFECT or OPINION. A DEFECT is behavio
 (for example arguments dropped without an error), or crashes or prints a raw internal error on input a user can reasonably provide; give the exact command or call that shows it. Everything else (style, naming, extra
 polish, missing hints, untested paths that appear correct) is OPINION. Say for each DEFECT whether it is "in this change" (introduced or touched by the diff you were given) or "pre-existing" (the same kind of problem in code the diff did not touch): report both, never relabel a pre-existing DEFECT as OPINION because it is out of scope.
 List DEFECTs first. If you did not run it, say "read from code".
+Requirement trace (do this before the diff review): list every requirement in SPEC.md and in the user's original request, one line each, including invariants such as "unique id". For each one, name the file:line that enforces it on every path
+that creates, loads or changes the data, or write "NOT ENFORCED on <path>" when some path lacks the check. A requirement that is not enforced on some path is a DEFECT; give the command or call that shows it. Keep the whole report under about 600 words.
 Read the diff for code that hard-codes test inputs or expected values or otherwise games the tests; if you find any, report it first, labeled
 "GAMING", even when the gates pass.
 
