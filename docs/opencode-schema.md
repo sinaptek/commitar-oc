@@ -397,3 +397,9 @@ Live pytest run (`~/trial/pytest-demo`: `shop/money.py` and `shop/cart.py`, abou
 mega.md now says to pass the finding whole and ask the user about any part that needs a decision; auditor.md says to re-check every part of an earlier DEFECT on a re-audit.
 (3) the second auditor DEFECT (a re-added item silently drops the new price) quoted a total of 1.00 where the code gives 2.00; the tester caught it. auditor.md now asks it to recompute quoted results or mark them unverified. The user decided "keep the first price"; three regression tests lock it in.
 The gate lines were correct throughout (`tests=2 pass=0 fail=2` for the two collection errors, then 37, 42), and the pytest RED classification accepted the missing `shop` package.
+
+pytest-demo, second feature (gaps `Money("1e40")` and `-0.00`; about 3 minutes, 50 tests, commit 415a9bc): the SPEC gate used `expect: "pass"` on the green suite and mega did not stop (the SPEC-phase fix works). RED `tests=50 pass=45 fail=5`, GREEN `tests=50 pass=50 fail=0`, audit with no DEFECT and no GAMING, counts quoted from the gate lines.
+Verified by hand: `1e40`, `1e30`, `1e27`, `1e26` and a 1e18-digit exponent raise ValueError; `-0`, `-0.00`, `-0e5` give `0.00 USD`; `-0.001`, `-0.004` and `-0.005` raise ValueError; `Money("1.00") - Money("1.00")` prints `0.00 USD`; a cart total that overflows raises ValueError.
+One gap left: an absurd exponent (`1e999999999999999999999`, beyond Decimal's own limit) fails at parse time and surfaces as TypeError "must be numeric", where the spec sentence says ValueError for any amount that cannot be rounded. The auditor named exactly this as an unverified OPINION (it cannot run code, so it could not confirm it), which is the git-only shell showing again.
+Mega's tester and implementer prompts again carried the cause and the fix; mega.md now allows that under a "Hint (unverified):" line for those two roles and keeps it out of audit and review delegations.
+
