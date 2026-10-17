@@ -195,3 +195,73 @@ test("test totals come from node:test's summary lines and appear in the gate sum
   assert.doesNotMatch(summarize(runGates({ cwd: d })), /tests=/)
 })
 
+
+// vitest 5.0.5 output captured from real runs (missing module, parse failure, assertion failure, no files, summaries).
+const VT_MISSING = ` RUN  v5.0.5 /proj
+
+ ❯ src/a.test.js (0 test)
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/a.test.js [ src/a.test.js ]
+Error: Cannot find module './foo.js' imported from /proj/src/a.test.js
+ ❯ src/a.test.js:2:1
+
+ Test Files  1 failed (1)
+      Tests  no tests
+`
+const VT_PARSE = ` RUN  v5.0.5 /proj
+
+ ❯ src/a.test.js (0 test)
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/a.test.js [ src/a.test.js ]
+RolldownError: Parse failure: Parse failed with 1 error:
+Unexpected token
+
+ Test Files  1 failed (1)
+      Tests  no tests
+`
+const VT_ASSERT = ` RUN  v5.0.5 /proj
+
+ ❯ src/a.test.js (2 tests | 1 failed) 7ms
+   × x 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/a.test.js > x
+AssertionError: expected 1 to be 2 // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+`
+const VT_NOFILES = ` RUN  v5.0.5 /proj
+
+No test files found, exiting with code 1
+`
+
+test("vitest RED: accepts a missing implementation module and a real failing assertion", () => {
+  assert.deepEqual(classifyRed(VT_MISSING, "/proj"), { ok: true })
+  assert.deepEqual(classifyRed(VT_ASSERT, "/proj"), { ok: true })
+})
+
+test("vitest RED: rejects a parse failure, a missing package and a run without test files", () => {
+  assert.equal(classifyRed(VT_PARSE, "/proj").ok, false)
+  assert.match(classifyRed(VT_PARSE, "/proj").reason, /failed to load/)
+  assert.equal(classifyRed(VT_MISSING.replace("'./foo.js'", "'left-pad'"), "/proj").ok, false)
+  assert.equal(classifyRed(VT_NOFILES, "/proj").ok, false)
+  assert.match(classifyRed(VT_NOFILES, "/proj").reason, /no test files/)
+})
+
+test("vitest totals: passed, failed and the total in parentheses", () => {
+  assert.deepEqual(testTotals(VT_ASSERT), { tests: 2, pass: 1, fail: 1 })
+  assert.deepEqual(testTotals(" Test Files  3 passed (3)\n      Tests  29 passed (29)\n"), { tests: 29, pass: 29, fail: 0 })
+  assert.deepEqual(testTotals("      Tests  2 failed | 27 passed | 1 skipped (30)\n"), { tests: 30, pass: 27, fail: 2 })
+  assert.equal(testTotals(VT_MISSING), null)
+})
+
+test("vitest RED through runGates: parse failure is rejected, missing module accepted", () => {
+  const mk = (out) => {
+    const d = proj({ test: `printf '%s' "$VT" ; exit 1` })
+    return d
+  }
+  const run = (out) => { process.env.VT = out; try { return runGates({ cwd: mk(out), only: ["test"], expect: "fail", phase: "RED" }) } finally { delete process.env.VT } }
+  assert.equal(run(VT_PARSE.replaceAll("/proj", "/x")).passed, false)
+  assert.match(run(VT_PARSE).results[0].output, /RED REJECTED/)
+  assert.equal(run(VT_MISSING).passed, true)
+})

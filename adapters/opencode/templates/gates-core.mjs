@@ -85,7 +85,7 @@ function commitsSince(cwd) {
 // (syntax error, bad import such as `expect` from node:test) is a broken test file. Only node:test
 // output is classified; other runners keep the plain non-zero-exit rule.
 export function classifyRed(out, cwd) {
-  if (!/^ℹ tests \d+/m.test(out)) return { ok: true }
+  if (!/^ℹ tests \d+/m.test(out)) return classifyVitestRed(out, cwd)
   const fails = [...out.matchAll(/^\s*✖ (.+?) \(\d[\d.]*m?s\)/gm)].map((m) => m[1])
   const isFile = (n) => /\.(?:[cm]?[jt]s|[jt]sx)$/.test(n)
   const fileFails = fails.filter(isFile)
@@ -106,9 +106,35 @@ export function classifyRed(out, cwd) {
 
 // Test totals from node:test's summary lines, so the report quotes counts the runner printed. Other runners: null.
 export function testTotals(out) {
+  const v = /^\s*Tests\s+(.+?)\s+\((\d+)\)\s*$/m.exec(out)
+  if (v) {
+    const part = (k) => { const m = new RegExp(`(\\d+) ${k}`).exec(v[1]); return m ? Number(m[1]) : 0 }
+    return { tests: Number(v[2]), pass: part("passed"), fail: part("failed") }
+  }
   const n = (k) => { const m = new RegExp(`^ℹ ${k} (\\d+)\\s*$`, "m").exec(out); return m ? Number(m[1]) : null }
   const tests = n("tests"), pass = n("pass"), fail = n("fail")
   return tests === null || pass === null || fail === null ? null : { tests, pass, fail }
+}
+
+// vitest: a file-level failure prints `FAIL  <file> [ <file> ]` followed by the error. It is an acceptable RED only when the
+// error is a missing module that is relative or under the project; a parse failure or any other load error is a broken test file.
+// A run without test files (`No test files found`) is not a RED either. Output that is not vitest's keeps the plain non-zero rule.
+function classifyVitestRed(out, cwd) {
+  if (/^\s*No test files found/m.test(out)) return { ok: false, reason: "vitest found no test files; RED needs new failing tests" }
+  if (!/^\s*Test Files\s+\d+/m.test(out)) return { ok: true }
+  const fileFails = [...out.matchAll(/^\s*FAIL\s+(\S+)\s+\[ \1 \]/gm)].map((m) => m[1])
+  const testFails = /^\s*FAIL\s+\S+\s+>\s/m.test(out)
+  if (!fileFails.length && !testFails) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
+  if (fileFails.length) {
+    const body = out.replace(/^\s*at .*$/gm, "")
+    const missing = [...body.matchAll(/Cannot find module '([^']+)'/g)].map((m) => m[1])
+    const relOrProject = (spec) => /^\.{1,2}\//.test(spec) || (spec.startsWith("/") && spec.startsWith(cwd) && !spec.includes("node_modules"))
+    const otherErrors = /Parse failure|SyntaxError|ReferenceError|TypeError|Failed to resolve import|Cannot find package/.test(body)
+    if (!missing.length || !missing.every(relOrProject) || otherErrors) {
+      return { ok: false, reason: `test file(s) failed to load for a reason other than a missing implementation (${fileFails.join(", ")}); fix the test file` }
+    }
+  }
+  return { ok: true }
 }
 
 function writeHandoff(cwd, cfg, phase, results, passed, capNote) {
