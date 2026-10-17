@@ -397,4 +397,3 @@ Live pytest run (`~/trial/pytest-demo`: `shop/money.py` and `shop/cart.py`, abou
 mega.md now says to pass the finding whole and ask the user about any part that needs a decision; auditor.md says to re-check every part of an earlier DEFECT on a re-audit.
 (3) the second auditor DEFECT (a re-added item silently drops the new price) quoted a total of 1.00 where the code gives 2.00; the tester caught it. auditor.md now asks it to recompute quoted results or mark them unverified. The user decided "keep the first price"; three regression tests lock it in.
 The gate lines were correct throughout (`tests=2 pass=0 fail=2` for the two collection errors, then 37, 42), and the pytest RED classification accepted the missing `shop` package.
-\n
