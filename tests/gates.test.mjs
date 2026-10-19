@@ -454,6 +454,206 @@ test("jest RED through runGates: syntax error is rejected, missing module accept
   assert.equal(run(JEST_MISSING.replaceAll("/proj", process.cwd())).passed, true)
 })
 
+// go 1.27.2 output captured from real runs (default flags; the lab path is /proj).
+const GO_UNDEFINED = `# example.com/lab [example.com/lab.test]
+./a_test.go:3:33: undefined: Add
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_EXT_UNDEFINED = `# example.com/lab_test [example.com/lab.test]
+./a_test.go:3:37: undefined: lab.Add
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_NOMETHOD = `# example.com/lab [example.com/lab.test]
+./a_test.go:3:42: x.Do undefined (type T has no field or method Do)
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_ARITY = `# example.com/lab [example.com/lab.test]
+./a_test.go:3:39: too many arguments in call to Add
+	have (number, number, number)
+	want (int, int)
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_NEWPKG_UNDEF = `# example.com/lab/newpkg [example.com/lab/newpkg.test]
+newpkg/n_test.go:3:31: undefined: N
+FAIL	example.com/lab/newpkg [build failed]
+FAIL
+`
+const GO_IMPORT_MODULE = `# example.com/lab
+a_test.go:2:20: no required module provides package example.com/lab/newpkg; to add it:
+	go get example.com/lab/newpkg
+FAIL	example.com/lab [setup failed]
+FAIL
+`
+const GO_IMPORT_3P = `# example.com/lab
+a_test.go:2:20: no required module provides package github.com/stretchr/testify/assert; to add it:
+	go get github.com/stretchr/testify/assert
+FAIL	example.com/lab [setup failed]
+FAIL
+`
+const GO_IMPORT_STD = `# example.com/lab
+a_test.go:2:20: package notapkg is not in std (/usr/local/go/src/notapkg)
+FAIL	example.com/lab [setup failed]
+FAIL
+`
+const GO_SYNTAX = `# example.com/lab
+a_test.go:3:38: expected '}', found 'EOF'
+FAIL	example.com/lab [setup failed]
+FAIL
+`
+const GO_UNUSED = `# example.com/lab [example.com/lab.test]
+./a_test.go:2:20: "os" imported and not used
+./a_test.go:3:30: declared and not used: x
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_VET = `# example.com/lab
+# [example.com/lab]
+./a_test.go:3:38: (*testing.common).Errorf format %d has arg "str" of wrong type string
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_IMPL_SYNTAX = `# example.com/lab [example.com/lab.test]
+./a.go:2:36: syntax error: unexpected }, expected expression
+FAIL	example.com/lab [build failed]
+FAIL
+`
+const GO_ASSERT = `--- FAIL: TestAdd (0.00s)
+    a_test.go:3: Add(1,2)=3
+--- FAIL: TestSub (0.00s)
+    --- FAIL: TestSub/one (0.00s)
+        a_test.go:5: x
+FAIL
+FAIL	example.com/lab	0.001s
+FAIL
+`
+const GO_ASSERT_V = `=== RUN   TestAdd
+    a_test.go:3: Add(1,2)=3
+--- FAIL: TestAdd (0.00s)
+=== RUN   TestOk
+--- PASS: TestOk (0.00s)
+=== RUN   TestSub
+=== RUN   TestSub/one
+    a_test.go:5: x
+--- FAIL: TestSub (0.00s)
+    --- FAIL: TestSub/one (0.00s)
+FAIL
+FAIL	example.com/lab	0.001s
+FAIL
+`
+const GO_PANIC_V = `=== RUN   TestOk
+--- PASS: TestOk (0.00s)
+=== RUN   TestAdd
+--- FAIL: TestAdd (0.00s)
+panic: assignment to entry in nil map [recovered, repanicked]
+
+goroutine 20 [running]:
+testing.tRunner.func1.2({0x6b8530, 0x6efef0})
+	/usr/local/go/src/testing/testing.go:2125 +0x232
+testing.tRunner.func1()
+	/usr/local/go/src/testing/testing.go:2128 +0x329
+panic({0x6b8530?, 0x6efef0?})
+	/usr/local/go/src/runtime/panic.go:859 +0x125
+example.com/lab.TestAdd(0x21a2e88de488?)
+	/proj/a_test.go:4 +0x28
+testing.tRunner(0x21a2e88de488, 0x6d5fc8)
+	/usr/local/go/src/testing/testing.go:2195 +0xea
+created by testing.(*T).Run in goroutine 1
+	/usr/local/go/src/testing/testing.go:2260 +0x4d4
+FAIL	example.com/lab	0.004s
+FAIL
+`
+const GO_MULTI = `# example.com/lab/sub [example.com/lab/sub.test]
+sub/s_test.go:3:31: undefined: Mul
+ok  	example.com/lab	(cached)
+FAIL	example.com/lab/sub [build failed]
+FAIL
+`
+const GO_NOFILES = `go: warning: "./..." matched no packages
+no packages to test
+`
+const GO_NOPATTERN = `# ./nosuchdir/...
+pattern ./nosuchdir/...: lstat ./nosuchdir/: no such file or directory
+FAIL	./nosuchdir/... [setup failed]
+FAIL
+`
+const GO_PASS = `ok  	example.com/lab	0.002s
+`
+const GO_PASS_V = `=== RUN   TestAdd
+--- PASS: TestAdd (0.00s)
+=== RUN   TestB
+    a_test.go:4: later
+--- SKIP: TestB (0.00s)
+=== RUN   TestSub
+=== RUN   TestSub/one
+=== RUN   TestSub/two
+--- PASS: TestSub (0.00s)
+    --- PASS: TestSub/one (0.00s)
+    --- PASS: TestSub/two (0.00s)
+PASS
+ok  	example.com/lab	0.002s
+`
+const GO_NOTESTFILES = `?   	example.com/lab	[no test files]
+`
+const goProj = (module = "example.com/lab") => {
+  const d = mkdtempSync(join(tmpdir(), "go-"))
+  writeFileSync(join(d, "go.mod"), `module ${module}\n\ngo 1.27\n`)
+  return d
+}
+
+test("go RED: accepts a missing function, method, signature, external-package function, new package and in-module import", () => {
+  const d = goProj()
+  for (const ok of [GO_UNDEFINED, GO_EXT_UNDEFINED, GO_NOMETHOD, GO_ARITY, GO_NEWPKG_UNDEF, GO_IMPORT_MODULE, GO_MULTI]) assert.deepEqual(classifyRed(ok, d), { ok: true })
+})
+
+test("go RED: accepts a failing test and a panic inside a test, with and without -v", () => {
+  const d = goProj()
+  for (const ok of [GO_ASSERT, GO_ASSERT_V, GO_PANIC_V]) assert.deepEqual(classifyRed(ok, d), { ok: true })
+})
+
+test("go RED: rejects syntax errors, unused imports or variables, vet failures and errors in non-test files", () => {
+  const d = goProj()
+  for (const bad of [GO_SYNTAX, GO_UNUSED, GO_VET, GO_IMPL_SYNTAX]) {
+    assert.equal(classifyRed(bad, d).ok, false)
+    assert.match(classifyRed(bad, d).reason, /failed to build/)
+  }
+})
+
+test("go RED: rejects a missing third-party or std package, and an in-module import when go.mod is absent or names another module", () => {
+  const d = goProj()
+  assert.equal(classifyRed(GO_IMPORT_3P, d).ok, false)
+  assert.equal(classifyRed(GO_IMPORT_STD, d).ok, false)
+  assert.equal(classifyRed(GO_IMPORT_MODULE, goProj("example.com/other")).ok, false)
+  assert.equal(classifyRed(GO_IMPORT_MODULE, "/nonexistent").ok, false)
+  assert.equal(classifyRed(GO_IMPORT_MODULE.replace("example.com/lab/newpkg", "example.com/labx/newpkg"), d).ok, false)
+})
+
+test("go RED: rejects a run with no packages, a bad pattern, and a failure with no failing test", () => {
+  const d = goProj()
+  assert.match(classifyRed(GO_NOFILES, d).reason, /no packages/)
+  assert.equal(classifyRed(GO_NOPATTERN, d).ok, false)
+  assert.match(classifyRed("FAIL\texample.com/lab\t0.005s\nFAIL\n", d).reason, /no failing test/)
+})
+
+test("go totals: only with -v, from the top-level result lines", () => {
+  assert.deepEqual(testTotals(GO_PASS_V), { tests: 3, pass: 2, fail: 0 })
+  assert.deepEqual(testTotals(GO_ASSERT_V), { tests: 3, pass: 1, fail: 2 })
+  assert.equal(testTotals(GO_PASS), null)
+  assert.equal(testTotals(GO_ASSERT), null)
+  assert.equal(testTotals(GO_NOTESTFILES), null)
+})
+
+test("go RED through runGates: a vet failure is rejected, a missing function accepted", () => {
+  const proj2 = (out) => { const d = goProj(); writeFileSync(join(d, "commitar.json"), JSON.stringify({ gates: { test: `printf '%s' "$GT" ; exit 1` } })); process.env.GT = out; return d }
+  const go = (out) => { const d = proj2(out); try { return runGates({ cwd: d, only: ["test"], expect: "fail", phase: "RED" }) } finally { delete process.env.GT } }
+  assert.equal(go(GO_VET).passed, false)
+  assert.match(go(GO_VET).results[0].output, /RED REJECTED/)
+  assert.equal(go(GO_UNDEFINED).passed, true)
+})
+
 // pytest 9.1.1 output captured from real runs.
 const PY_MISSING = `==================================== ERRORS ====================================
 __________________________ ERROR collecting test_a.py __________________________

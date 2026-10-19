@@ -83,8 +83,8 @@ function commitsSince(cwd) {
 }
 
 // RED must fail because tests fail, or because the implementation does not exist yet. Anything else
-// (syntax error, bad import such as `expect` from node:test) is a broken test file. node:test, vitest, jest and
-// pytest output is classified; other runners keep the plain non-zero-exit rule.
+// (syntax error, bad import such as `expect` from node:test) is a broken test file. node:test, vitest, jest, go test
+// and pytest output is classified; other runners keep the plain non-zero-exit rule.
 export function classifyRed(out, cwd) {
   if (!/^ℹ tests \d+/m.test(out)) return classifyVitestRed(out, cwd)
   const fails = [...out.matchAll(/^\s*✖ (.+?) \(\d[\d.]*m?s\)/gm)].map((m) => m[1])
@@ -114,6 +114,8 @@ export function testTotals(out) {
   }
   const jest = jestTotals(out)
   if (jest) return jest
+  const go = goTotals(out)
+  if (go) return go
   const py = pytestTotals(out)
   if (py) return py
   const n = (k) => { const m = new RegExp(`^ℹ ${k} (\\d+)\\s*$`, "m").exec(out); return m ? Number(m[1]) : null }
@@ -148,7 +150,7 @@ function classifyVitestRed(out, cwd) {
 // Output that is not jest's (no `Test Suites:` line) keeps going down the chain.
 function classifyJestRed(out, cwd) {
   if (/^No tests found, exiting with code/m.test(out)) return { ok: false, reason: "jest found no test files; RED needs new failing tests" }
-  if (!/^Test Suites:\s+\d+/m.test(out)) return classifyPytestRed(out, cwd)
+  if (!/^Test Suites:\s+\d+/m.test(out)) return classifyGoRed(out, cwd)
   const blocks = out.split(/^\s*● Test suite failed to run\s*$/m).slice(1).map((b) => b.split(/^\s*● /m)[0])
   const testFails = Number(/^Tests:\s+.*?(\d+) failed/m.exec(out)?.[1] ?? 0)
   if (!blocks.length && !testFails) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
@@ -159,6 +161,29 @@ function classifyJestRed(out, cwd) {
     return !missing.length || !missing.every(relOrProject) || /SyntaxError|ReferenceError|TypeError|Must use import|Unexpected token/.test(body)
   })
   if (bad.length) return { ok: false, reason: `test file(s) failed to load for a reason other than a missing implementation (${bad.length} suite(s)); fix the test file` }
+  return { ok: true }
+}
+
+// go test: output has package lines starting with a tab-separated status (`FAIL\texample.com/m\t0.001s`, `FAIL\texample.com/m [build failed]`, `ok\t...`).
+// A missing implementation is a compile error in a *_test.go file: `undefined: X`, `x.M undefined (type T has no field or method M)`,
+// `too many/not enough arguments in call to F`, or an import of a package inside this module that does not exist yet (`no required
+// module provides package <module>/...`, module path read from go.mod). A syntax error, an unused import or variable, a vet failure,
+// any error in a non-test file, a missing third-party or std package and a run with no packages are broken test files. A failing
+// test prints `--- FAIL:`; a package that fails without one (TestMain, init panic) is not a RED. Other output keeps going down the chain.
+function classifyGoRed(out, cwd) {
+  if (!/^(?:FAIL|ok|\?)\t\S+(?:\t| \[)/m.test(out) && !/^--- (?:FAIL|PASS):/m.test(out) && !/^no packages to test$/m.test(out)) return classifyPytestRed(out, cwd)
+  if (/^no packages to test$/m.test(out) || /matched no packages/.test(out)) return { ok: false, reason: "go found no packages to test; RED needs new failing tests" }
+  let module
+  try { module = /^module\s+(\S+)/m.exec(readFileSync(join(cwd, "go.mod"), "utf8"))?.[1] } catch {}
+  const diags = [...out.matchAll(/^(?:\.\/)?(\S+\.go):\d+:\d+: (.*)$/gm)].map((m) => ({ file: m[1], msg: m[2] }))
+  const missingImpl = ({ file, msg }) => {
+    const pkg = /^no required module provides package (\S+?)(?:;|$)/.exec(msg)?.[1]
+    if (pkg) return Boolean(module) && (pkg === module || pkg.startsWith(`${module}/`))
+    return file.endsWith("_test.go") && /^undefined: |^\S+ undefined \(type .+ has no field or method |^(?:too many|not enough) arguments in call to /.test(msg)
+  }
+  const bad = diags.filter((d) => !missingImpl(d))
+  if (bad.length) return { ok: false, reason: `test file(s) failed to build for a reason other than a missing implementation (${bad.slice(0, 3).map((d) => `${d.file}: ${d.msg}`).join("; ")}); fix the test file` }
+  if (!diags.length && !/^\s*--- FAIL:/m.test(out)) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
   return { ok: true }
 }
 
@@ -192,6 +217,14 @@ function jestTotals(out) {
   if (!m || Number(m[2]) === 0) return null
   const part = (k) => { const x = new RegExp(`(\\d+) ${k}`).exec(m[1]); return x ? Number(x[1]) : 0 }
   return { tests: Number(m[2]), pass: part("passed"), fail: part("failed") }
+}
+
+// go test counts only with -v: top-level `--- PASS|FAIL|SKIP:` lines (subtests are indented and not counted again). Without -v there are no counts.
+function goTotals(out) {
+  if (!/^=== RUN\s/m.test(out)) return null
+  const n = (k) => (out.match(new RegExp(`^--- ${k}: `, "gm")) ?? []).length
+  const tests = n("PASS") + n("FAIL") + n("SKIP")
+  return tests ? { tests, pass: n("PASS"), fail: n("FAIL") } : null
 }
 
 function pytestTotals(out) {
