@@ -1,0 +1,26 @@
+{
+	admin off
+	auto_https off
+}
+
+http://127.0.0.1:4311 {
+	bind 127.0.0.1
+	# Writes need the bearer token; reads and the UI are open to whoever can reach this loopback port (SSH tunnel).
+	@unauthorized_ingest {
+		method POST
+		path /api/handoffs
+		not header Authorization "Bearer {$HCP_TOKEN}"
+	}
+	handle @unauthorized_ingest {
+		respond "Unauthorized" 401
+	}
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:4312
+	}
+	handle {
+		root * /home/mariano/hcp-deploy/src/apps/web/dist
+		try_files {path} /index.html
+		file_server
+	}
+}

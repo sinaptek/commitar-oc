@@ -40,7 +40,7 @@ Statuses: **Met** (evidence given), **Partly** (what is missing is stated), **Op
 | C4 | Must | commitar-hcp stores a handoff in its own store (not the demo's), maps status as agreed, never produces a Verification or an accepted state from the handoff, and lets a human decide in the UI | Met | `handoff-contract` (now in HCP `main`) in commitar-hcp: 19 server tests, `apps/web/tests/handoff-decision.spec.ts`, demo specs unchanged; whole chain run on 2026-10-18 (new function) and 2026-10-19 (bug fix on an existing repo, roman-converter) (see `docs/opencode-schema.md`). |
 | C5 | Must | The flow is one way (commitar-oc to HCP) under contract v1 | Met | Confirmed by the owner 2026-10-18 |
 | C6 | Must | The branch is merged into commitar-hcp `main` | Met | https://github.com/marianof87/commitar-hcp/pull/1 merged 2026-10-19 (merge commit 8c612a7, the four commits kept); it had no CI checks and no reviews, so the evidence is the test runs listed under C4 |
-| C7 | Should | A handoff reaches an HCP that is running somewhere other than this machine | Open | Only local servers were used; HCP is not deployed |
+| C7 | Should | A handoff reaches an HCP that is running somewhere other than this machine | Open | An HCP now runs on this host (loopback, user-level, ssh tunnel; see `docs/hcp-deploy.md`) and holds the roman-converter handoff, but it is the same machine, so the criterion stays open |
 
 ## D. Quality and operation
 
