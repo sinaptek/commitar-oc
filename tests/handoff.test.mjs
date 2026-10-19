@@ -167,3 +167,13 @@ test("push fails clearly on a missing or bad url, an unreachable server, and a t
   assert.equal((await pushHandoff({ dir, url: "http://hcp.example.com", token: "t", allowHttp: true, fetchImpl: spy, run: noGit })).error, undefined)
   assert.equal((await pushHandoff({ dir, url: "https://hcp.example.com", token: "t", fetchImpl: spy, run: noGit })).error, undefined)
 })
+
+test("the project's absolute path is scrubbed from gate command and output, in json and markdown", () => {
+  const dir = proj()
+  const h = { ...ok, status: "gate_failed", gates: [{ command: `node ${dir}/t.js`, passed: false, output: `Error at ${dir}/src/a.js:3\n    at ${dir}/node_modules/x` }] }
+  writeFileSync(join(dir, "HANDOFF.json"), JSON.stringify(h))
+  const b = buildBundle({ dir, run: noGit })
+  assert.ok(!JSON.stringify(b.json).includes(dir) && !b.md.includes(dir))
+  assert.equal(b.json.gates[0].output, "Error at <project>/src/a.js:3\n    at <project>/node_modules/x")
+  assert.equal(readFileSync(join(dir, "HANDOFF.json"), "utf8").includes(dir), true) // the file on disk is left alone
+})

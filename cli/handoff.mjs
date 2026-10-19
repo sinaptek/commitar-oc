@@ -1,5 +1,5 @@
 // handoff export: validate HANDOFF.json against protocol/handoff.schema.json and bundle it for paid commitar.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
+import { readFileSync, writeFileSync, mkdirSync, existsSync, realpathSync } from "node:fs"
 import { dirname, join, resolve, relative, isAbsolute } from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
@@ -38,6 +38,15 @@ function defaultRun(cmd, args, { cwd }) {
   return { ok: r.status === 0 && !r.error, out: (r.stdout ?? "").trim() }
 }
 
+// Gate output (stack traces, test runner paths) carries the project's absolute path; it must not leave the machine.
+export function scrubPaths(text, dir) {
+  const roots = new Set([resolve(dir)])
+  try { roots.add(realpathSync(dir)) } catch {}
+  let out = text
+  for (const r of [...roots].sort((a, b) => b.length - a.length)) out = out.split(r).join("<project>")
+  return out
+}
+
 export function buildBundle({ dir, run = defaultRun, now = new Date() }) {
   const path = join(dir, "HANDOFF.json")
   if (!existsSync(path)) return { error: "HANDOFF.json not found (run a phase with the gates tool first)" }
@@ -73,6 +82,7 @@ export function buildBundle({ dir, run = defaultRun, now = new Date() }) {
     warnings.push('spec path not set in HANDOFF.json; used "spec.md"')
   } else warnings.push("no spec found")
 
+  if (h.gates) h = { ...h, gates: h.gates.map((g) => ({ ...g, command: scrubPaths(g.command, dir), ...("output" in g ? { output: scrubPaths(g.output, dir) } : {}) })) }
   const json = { ...h, exportedAt: now.toISOString(), git: gitInfo }
   return { json, md: renderMarkdown(json, spec, warnings), warnings }
 }

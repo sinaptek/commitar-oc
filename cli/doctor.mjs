@@ -41,6 +41,11 @@ export function doctor({ dir, models, run = defaultRun, smoke = true, smokeTimeo
   try { accessSync(dir, constants.W_OK); results.push(pass("target dir writable", dir)) }
   catch { results.push(fail("target dir writable", `${dir} (check owner/group; keep it group-writable)`)) }
 
+  // The COMMIT phase needs an author; without one the first commit fails and the agent improvises an identity.
+  const missingId = ["user.name", "user.email"].filter((k) => !run("git", ["config", k], { cwd: dir }).out)
+  results.push(missingId.length ? fail("git identity", `${missingId.join(" and ")} not set; run: git config user.name "..." && git config user.email "..." (in the project)`)
+    : pass("git identity", run("git", ["config", "user.email"], { cwd: dir }).out))
+
   for (const f of ["opencode.json", ".opencode/agents"]) {
     results.push(existsSync(join(dir, f)) ? pass(`generated: ${f}`) : fail(`generated: ${f}`, "missing; run: commitar-oc init"))
   }

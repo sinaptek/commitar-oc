@@ -24,6 +24,7 @@ const mkdir = () => {
 const fakeRun = (over = {}) => (cmd, args) => {
   const key = args.join(" ")
   if (over[key]) return over[key]
+  if (args[0] === "config") return { ok: true, out: "x" }
   if (key === "--version") return { ok: true, out: "1.0.0" }
   if (key === "debug config") return { ok: true, out: "{}" }
   if (key === "models") return { ok: true, out: "p/a\np/b" }
@@ -147,3 +148,9 @@ test("a missing probe command is flagged, a declared one passes", () => {
   assert.deepEqual(failed(doctor({ dir: d, models, run: fakeRun() })), [])
 })
 
+
+test("missing git identity fails with the fix", () => {
+  const rs = doctor({ dir: mkdir(), models, run: (c, a) => (a[0] === "config" && a[1] === "user.email" ? { ok: false, out: "" } : fakeRun()(c, a)) })
+  assert.deepEqual(failed(rs), ["git identity"])
+  assert.match(rs.find((r) => r.name === "git identity").detail, /user\.email not set/)
+})
