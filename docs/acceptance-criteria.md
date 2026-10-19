@@ -37,9 +37,9 @@ Statuses: **Met** (evidence given), **Partly** (what is missing is stated), **Op
 | C1 | Must | `handoff export` validates `HANDOFF.json` against `protocol/handoff.schema.json` and writes json and md | Met | `tests/handoff.test.mjs`, `tests/contract.test.mjs` |
 | C2 | Must | `handoff push` sends the same bundle to commitar-hcp, never sends an invalid or missing handoff, and does not send a token over plain http to a remote host | Met | 5 tests against a local server; run against the real HCP server |
 | C3 | Must | The contract is pinned on both sides and a change fails a test until both are updated | Met | `tests/contract.test.mjs`; commitar-hcp `packages/handoff-contract` drift tests |
-| C4 | Must | commitar-hcp stores a handoff in its own store (not the demo's), maps status as agreed, never produces a Verification or an accepted state from the handoff, and lets a human decide in the UI | Met on a branch | `handoff-contract` branch in commitar-hcp: 19 server tests, `apps/web/tests/handoff-decision.spec.ts`, demo specs unchanged; whole chain run on 2026-10-18 (new function) and 2026-10-19 (bug fix on an existing repo, roman-converter) (see `docs/opencode-schema.md`). **Not merged to HCP `main`** |
+| C4 | Must | commitar-hcp stores a handoff in its own store (not the demo's), maps status as agreed, never produces a Verification or an accepted state from the handoff, and lets a human decide in the UI | Met | `handoff-contract` (now in HCP `main`) in commitar-hcp: 19 server tests, `apps/web/tests/handoff-decision.spec.ts`, demo specs unchanged; whole chain run on 2026-10-18 (new function) and 2026-10-19 (bug fix on an existing repo, roman-converter) (see `docs/opencode-schema.md`). |
 | C5 | Must | The flow is one way (commitar-oc to HCP) under contract v1 | Met | Confirmed by the owner 2026-10-18 |
-| C6 | Must | The branch is merged into commitar-hcp `main` | Open | https://github.com/marianof87/commitar-hcp/pull/1 opened 2026-10-18, waiting for review |
+| C6 | Must | The branch is merged into commitar-hcp `main` | Met | https://github.com/marianof87/commitar-hcp/pull/1 merged 2026-10-19 (merge commit 8c612a7, the four commits kept); it had no CI checks and no reviews, so the evidence is the test runs listed under C4 |
 | C7 | Should | A handoff reaches an HCP that is running somewhere other than this machine | Open | Only local servers were used; HCP is not deployed |
 
 ## D. Quality and operation
@@ -57,11 +57,10 @@ Statuses: **Met** (evidence given), **Partly** (what is missing is stated), **Op
 A fallback or routing chain between models (Headroom is a context-compression proxy, not a router); claude-mem; a return
 path from HCP to the free-tier loop (needs contract `version: 2`); the paid product's own changes beyond ingesting a handoff.
 
-## Verdict (2026-10-18)
-All **Must** criteria are met except three that are open or partial:
-- **C6** (merge the HCP branch): open until pull request 1 in commitar-hcp is merged.
+## Verdict (2026-10-19)
+All **Must** criteria are met except two that are partial:
 - **B2/B3** (RED classification and counts for runners other than the three covered): partly met. This is acceptable for v1 if the supported runners are stated, which README and `protocol/gates.md` do.
 - **B6** (no gaming): partly met. It is a behavior of free models, so it can only be watched, not proven.
 
-So v1 is **ready once C6 is done**, with B2, B3 and B6 as stated limits. The **Should** gaps (C7, D5, D6, A5, B9) are
+So v1 is **done**, with B2, B3 and B6 as stated limits. The **Should** gaps (C7, D5, D6, A5, B9) are
 the next work, in that order of value: a deployed HCP makes "continue in commitar" real for someone else.
