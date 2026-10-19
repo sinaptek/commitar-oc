@@ -21,8 +21,8 @@ Statuses: **Met** (evidence given), **Partly** (what is missing is stated), **Op
 | # | Level | Criterion | Status | Evidence |
 |---|---|---|---|---|
 | B1 | Must | SPEC, RED, GREEN, AUDIT and COMMIT run on free models for a new function, a bug fix on existing code and a multi-file project, with the gates deciding every phase | Met | `docs/opencode-schema.md`: gestor-de-tareas (6 runs, 106 tests), vitest-demo, pytest-demo |
-| B2 | Must | RED must fail for the right reason: a syntax error, a bad import or an empty suite is rejected, a missing implementation or a failing assertion is accepted | Partly | Done for `node:test`, vitest, pytest. Jest and `go test` use the plain non-zero-exit rule |
-| B3 | Must | The gate prints the runner's counts and the agents quote those, not their own | Partly | `tests=N pass=M fail=K` for `node:test`, vitest, pytest; none for other runners |
+| B2 | Must | RED must fail for the right reason: a syntax error, a bad import or an empty suite is rejected, a missing implementation or a failing assertion is accepted | Partly | Done for `node:test`, vitest, jest, pytest. `go test` and other runners use the plain non-zero-exit rule |
+| B3 | Must | The gate prints the runner's counts and the agents quote those, not their own | Partly | `tests=N pass=M fail=K` for `node:test`, vitest, jest, pytest; none for other runners |
 | B4 | Must | The retry cap is enforced by the gates tool: the third failed GREEN run says stop | Met | unit tests; a real model stopped on it |
 | B5 | Must | Contradictory tests stop at GREEN with status `gate_failed` and no commit | Met | failure-path run |
 | B6 | Must | The agents do not edit or hard-code around the tests to pass | Partly | One run gamed a wrong test before the role rules were tightened; none in the runs since. The auditor labels GAMING |
@@ -51,7 +51,7 @@ Statuses: **Met** (evidence given), **Partly** (what is missing is stated), **Op
 | D3 | Must | No secrets in the repo | Met | Scan of the 48 tracked files 2026-10-18: one fake key in a vault-redaction test fixture, nothing else; `.env` is ignored |
 | D4 | Must | README and `docs/opencode-schema.md` match what the code does | Met | Updated with each change |
 | D5 | Should | Works on Windows | Open | The design notes list Windows and MCP as the source of past trouble; only Linux was run |
-| D6 | Should | Works with runners beyond Node and Python | Open | Jest, `go test`, and other languages unverified |
+| D6 | Should | Works with runners beyond Node and Python | Partly | Jest is classified and checked live (jest 30, CommonJS); `go test` and other languages are unverified |
 
 ## Out of scope for v1
 A fallback or routing chain between models (Headroom is a context-compression proxy, not a router); claude-mem; a return

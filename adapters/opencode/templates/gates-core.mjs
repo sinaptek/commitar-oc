@@ -83,8 +83,8 @@ function commitsSince(cwd) {
 }
 
 // RED must fail because tests fail, or because the implementation does not exist yet. Anything else
-// (syntax error, bad import such as `expect` from node:test) is a broken test file. Only node:test
-// output is classified; other runners keep the plain non-zero-exit rule.
+// (syntax error, bad import such as `expect` from node:test) is a broken test file. node:test, vitest, jest and
+// pytest output is classified; other runners keep the plain non-zero-exit rule.
 export function classifyRed(out, cwd) {
   if (!/^ℹ tests \d+/m.test(out)) return classifyVitestRed(out, cwd)
   const fails = [...out.matchAll(/^\s*✖ (.+?) \(\d[\d.]*m?s\)/gm)].map((m) => m[1])
@@ -112,6 +112,8 @@ export function testTotals(out) {
     const part = (k) => { const m = new RegExp(`(\\d+) ${k}`).exec(v[1]); return m ? Number(m[1]) : 0 }
     return { tests: Number(v[2]), pass: part("passed"), fail: part("failed") }
   }
+  const jest = jestTotals(out)
+  if (jest) return jest
   const py = pytestTotals(out)
   if (py) return py
   const n = (k) => { const m = new RegExp(`^ℹ ${k} (\\d+)\\s*$`, "m").exec(out); return m ? Number(m[1]) : null }
@@ -124,7 +126,7 @@ export function testTotals(out) {
 // A run without test files (`No test files found`) is not a RED either. Output that is not vitest's keeps the plain non-zero rule.
 function classifyVitestRed(out, cwd) {
   if (/^\s*No test files found/m.test(out)) return { ok: false, reason: "vitest found no test files; RED needs new failing tests" }
-  if (!/^\s*Test Files\s+\d+/m.test(out)) return classifyPytestRed(out, cwd)
+  if (!/^\s*Test Files\s+\d+/m.test(out)) return classifyJestRed(out, cwd)
   const fileFails = [...out.matchAll(/^\s*FAIL\s+(\S+)\s+\[ \1 \]/gm)].map((m) => m[1])
   const testFails = /^\s*FAIL\s+\S+\s+>\s/m.test(out)
   if (!fileFails.length && !testFails) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
@@ -137,6 +139,26 @@ function classifyVitestRed(out, cwd) {
       return { ok: false, reason: `test file(s) failed to load for a reason other than a missing implementation (${fileFails.join(", ")}); fix the test file` }
     }
   }
+  return { ok: true }
+}
+
+// jest: a suite that cannot load prints `● Test suite failed to run` followed by the error; a failing test prints `● <name>`.
+// A suite that cannot load is an acceptable RED only for `Cannot find module '<relative or in-project path>'`; a syntax error, a
+// ReferenceError, ESM that jest cannot run, or a missing package is a broken test file. A run that found no test files is not a RED.
+// Output that is not jest's (no `Test Suites:` line) keeps going down the chain.
+function classifyJestRed(out, cwd) {
+  if (/^No tests found, exiting with code/m.test(out)) return { ok: false, reason: "jest found no test files; RED needs new failing tests" }
+  if (!/^Test Suites:\s+\d+/m.test(out)) return classifyPytestRed(out, cwd)
+  const blocks = out.split(/^\s*● Test suite failed to run\s*$/m).slice(1).map((b) => b.split(/^\s*● /m)[0])
+  const testFails = Number(/^Tests:\s+.*?(\d+) failed/m.exec(out)?.[1] ?? 0)
+  if (!blocks.length && !testFails) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
+  const relOrProject = (spec) => /^\.{1,2}\//.test(spec) || (spec.startsWith("/") && spec.startsWith(cwd) && !spec.includes("node_modules"))
+  const bad = blocks.filter((b) => {
+    const body = b.replace(/^\s*at .*$/gm, "")
+    const missing = [...body.matchAll(/Cannot find module '([^']+)'/g)].map((m) => m[1])
+    return !missing.length || !missing.every(relOrProject) || /SyntaxError|ReferenceError|TypeError|Must use import|Unexpected token/.test(body)
+  })
+  if (bad.length) return { ok: false, reason: `test file(s) failed to load for a reason other than a missing implementation (${bad.length} suite(s)); fix the test file` }
   return { ok: true }
 }
 
@@ -162,6 +184,14 @@ function classifyPytestRed(out, cwd) {
   if (/^no tests ran in /m.test(out) || /^=* ?no tests ran in /m.test(out)) return { ok: false, reason: "pytest ran no tests; RED needs new failing tests" }
   if (!blocks.length && !/^FAILED /m.test(out)) return { ok: false, reason: "the runner exited non-zero but reported no failing test" }
   return { ok: true }
+}
+
+// jest: `Tests:       1 failed, 1 passed, 2 total`. A run where no test executed (a suite failed to load) has no totals, as with vitest.
+function jestTotals(out) {
+  const m = /^Tests:\s+(.+?)\s+(\d+) total\s*$/m.exec(out)
+  if (!m || Number(m[2]) === 0) return null
+  const part = (k) => { const x = new RegExp(`(\\d+) ${k}`).exec(m[1]); return x ? Number(x[1]) : 0 }
+  return { tests: Number(m[2]), pass: part("passed"), fail: part("failed") }
 }
 
 function pytestTotals(out) {

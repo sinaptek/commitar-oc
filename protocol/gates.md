@@ -20,13 +20,14 @@ A project declares its deterministic gates in `commitar.json` at its root:
   handoff write (baseline in `.commitar/base`), `next`, and `status` (`done` only after a passing COMMIT gate with a commit).
   `init` adds `HANDOFF.json` and `.commitar/` to the project's `.gitignore`.
 - Agents never decide a gate's result; they only report the tool's output.
-- For node:test, vitest and pytest, each result line also carries the runner's own totals (`tests=N pass=M fail=K`). Quote those numbers in reports; never compute or remember a test count.
+- For node:test, vitest, jest and pytest, each result line also carries the runner's own totals (`tests=N pass=M fail=K`). Quote those numbers in reports; never compute or remember a test count.
 
 ## RED check
-`expect: "fail"` on the `test` gate is classified, not just "non-zero exit" (node:test, vitest and pytest output; other
+`expect: "fail"` on the `test` gate is classified, not just "non-zero exit" (node:test, vitest, jest and pytest output; other
 runners keep the plain non-zero rule). RED passes when at least one named test fails, or when the only
 load errors are a missing implementation: `Cannot find module` for a relative or in-project path, or a
 missing export from a relative module. It is rejected, with `RED REJECTED: <reason>` in the output, for a
 syntax error, a bad import (e.g. `expect` from `node:test`), a missing package, or a non-zero exit with no
 failing test. This is a heuristic on runner output, not proof the tests are good: GREEN still has to pass.
-Not covered: other runners (jest, pytest, ...), and a test that fails for the wrong reason.
+Jest: a suite that cannot load is accepted only for `Cannot find module` with a relative or in-project path; a syntax error, ReferenceError, ESM that jest cannot run or a missing package is rejected, and so is a run with no test files. Checked on jest 30 with CommonJS tests; transformer setups (babel-jest, ts-jest, ESM mode) print the same summary lines but were not run.
+Not covered: other runners (`go test`, ...), and a test that fails for the wrong reason.

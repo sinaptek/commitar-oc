@@ -266,6 +266,194 @@ test("vitest RED through runGates: parse failure is rejected, missing module acc
   assert.equal(run(VT_MISSING).passed, true)
 })
 
+// jest 30.5.2 output captured from real runs (colors off, lab path replaced by /proj).
+const JEST_MISSING = `FAIL ./a.test.js
+  ● Test suite failed to run
+
+    Cannot find module './foo' from 'a.test.js'
+
+    > 1 | const {add}=require('./foo');test('add',()=>{expect(add(1,2)).toBe(3)})
+        |             ^
+      2 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:1031:11)
+      at Object.require (a.test.js:1:13)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.352 s
+Ran all test suites.
+`
+const JEST_ASSERT = `FAIL ./a.test.js
+  ● add
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 3
+    Received: 0
+
+    > 1 | const {add}=require('./foo');test('add',()=>{expect(add(1,2)).toBe(3)});test('ok',()=>{expect(1).toBe(1)})
+        |                                                               ^
+      2 |
+
+      at Object.toBe (a.test.js:1:63)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   0 total
+Time:        0.383 s, estimated 1 s
+Ran all test suites.
+`
+const JEST_NOTFN = `FAIL ./a.test.js
+  ● add
+
+    TypeError: add is not a function
+
+    > 1 | const {add}=require('./foo');test('add',()=>{expect(add(1,2)).toBe(3)})
+        |                                                     ^
+      2 |
+
+      at Object.add (a.test.js:1:53)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.377 s
+Ran all test suites.
+`
+const JEST_SYNTAX = `FAIL ./a.test.js
+  ● Test suite failed to run
+
+    SyntaxError: /proj/a.test.js: Unexpected token, expected "," (1:68)
+
+    > 1 | const {add}=require('./foo');test('add',()=>{expect(add(1,2).toBe(3)})
+        |                                                                     ^
+      2 |
+
+      at constructor (node_modules/@babel/parser/src/parse-error.ts:96:45)
+          at parser.next (<anonymous>)
+          at normalizeFile.next (<anonymous>)
+          at run.next (<anonymous>)
+          at transform.next (<anonymous>)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.445 s, estimated 1 s
+Ran all test suites.
+`
+const JEST_PKG = `FAIL ./a.test.js
+  ● Test suite failed to run
+
+    Cannot find module 'left-padz' from 'a.test.js'
+
+    > 1 | const x=require('left-padz');test('t',()=>{expect(x).toBeTruthy()})
+        |         ^
+      2 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:1031:11)
+      at Object.require (a.test.js:1:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.379 s
+Ran all test suites.
+`
+const JEST_TOPLEVEL = `FAIL ./a.test.js
+  ● Test suite failed to run
+
+    ReferenceError: notDefined is not defined
+
+    > 1 | const y = notDefined + 1;test('t',()=>{})
+        |           ^
+      2 |
+
+      at Object.notDefined (a.test.js:1:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.371 s, estimated 1 s
+Ran all test suites.
+`
+const JEST_ESM = `FAIL ./a.test.js
+  ● Test suite failed to run
+
+    Must use import to load ES Module: /proj/a.test.js
+
+    The file contains ESM syntax (import/export) that could not be executed as CommonJS. Either:
+      - Configure a transform (e.g. babel-jest) that compiles this file to CommonJS (see https://jestjs.io/docs/code-transformation)
+      - If the file is in "node_modules", allow it to be transformed by adjusting "transformIgnorePatterns" (see https://jestjs.io/docs/configuration#transformignorepatterns-arraystring)
+      - Use Node v24.9+ where Jest supports require(esm) natively (see https://jestjs.io/docs/ecmascript-modules#require-of-esm)
+
+      at createRequireEsmError (node_modules/jest-runtime/build/index.js:452:17)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.369 s
+Ran all test suites.
+`
+const JEST_NOFILES = `No tests found, exiting with code 1
+Run with \`--passWithNoTests\` to exit with code 0
+In /proj
+  2 files checked.
+  testMatch: **/__tests__/**/*.?([mc])[jt]s?(x), **/?(*.)+(spec|test).?([mc])[jt]s?(x) - 0 matches
+  testPathIgnorePatterns: /node_modules/ - 2 matches
+  testRegex:  - 0 matches
+Pattern:  - 0 matches
+`
+const JEST_PASS = `Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshots:   0 total
+Time:        0.358 s
+Ran all test suites.
+`
+
+test("jest RED: accepts a missing implementation module, a failing assertion and a call to a missing function", () => {
+  assert.deepEqual(classifyRed(JEST_MISSING, "/proj"), { ok: true })
+  assert.deepEqual(classifyRed(JEST_ASSERT, "/proj"), { ok: true })
+  assert.deepEqual(classifyRed(JEST_NOTFN, "/proj"), { ok: true })
+})
+
+test("jest RED: rejects a syntax error, a top-level ReferenceError, unrunnable ESM, a missing package and no test files", () => {
+  for (const bad of [JEST_SYNTAX, JEST_TOPLEVEL, JEST_ESM, JEST_PKG]) {
+    assert.equal(classifyRed(bad, "/proj").ok, false)
+    assert.match(classifyRed(bad, "/proj").reason, /failed to load/)
+  }
+  assert.match(classifyRed(JEST_NOFILES, "/proj").reason, /no test files/)
+})
+
+test("jest RED: a suite that cannot load for a bad reason is rejected even when another test fails", () => {
+  const both = `${JEST_ASSERT.split("\nTest Suites:")[0]}\n${JEST_SYNTAX.split("\nTest Suites:")[0]}\nTest Suites: 2 failed, 2 total\nTests:       1 failed, 1 passed, 2 total\n`
+  assert.equal(classifyRed(both, "/proj").ok, false)
+})
+
+test("jest RED: a missing module that is not relative or under the project is a broken test file", () => {
+  assert.equal(classifyRed(JEST_MISSING.replace("'./foo'", "'/elsewhere/foo'"), "/proj").ok, false)
+  assert.equal(classifyRed(JEST_MISSING.replace("'./foo'", "'/proj/src/foo'"), "/proj").ok, true)
+})
+
+test("jest totals: the Tests line, and none when no test executed", () => {
+  assert.deepEqual(testTotals(JEST_ASSERT), { tests: 2, pass: 1, fail: 1 })
+  assert.deepEqual(testTotals(JEST_PASS), { tests: 2, pass: 2, fail: 0 })
+  assert.deepEqual(testTotals("Tests:       1 skipped, 1 todo, 3 passed, 5 total\n"), { tests: 5, pass: 3, fail: 0 })
+  assert.equal(testTotals(JEST_MISSING), null)
+  assert.equal(testTotals(JEST_NOFILES), null)
+})
+
+test("jest RED through runGates: syntax error is rejected, missing module accepted", () => {
+  const run = (out) => {
+    process.env.JT = out
+    try { return runGates({ cwd: proj({ test: `printf '%s' "$JT" ; exit 1` }), only: ["test"], expect: "fail", phase: "RED" }) } finally { delete process.env.JT }
+  }
+  assert.equal(run(JEST_SYNTAX).passed, false)
+  assert.match(run(JEST_SYNTAX).results[0].output, /RED REJECTED/)
+  assert.equal(run(JEST_MISSING.replaceAll("/proj", process.cwd())).passed, true)
+})
+
 // pytest 9.1.1 output captured from real runs.
 const PY_MISSING = `==================================== ERRORS ====================================
 __________________________ ERROR collecting test_a.py __________________________
