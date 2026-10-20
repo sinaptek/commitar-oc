@@ -47,7 +47,11 @@ export function runProbe({ cwd, code, timeoutMs = 20000 }) {
     const { NODE_TEST_CONTEXT, ...env } = process.env
     const r = spawnSync(cfg.probe.replaceAll("{file}", file), {
       cwd: tmp, shell: true, encoding: "utf8", timeout: timeoutMs, env: { ...env, PYTHONDONTWRITEBYTECODE: "1" },
+      // Own session and SIGKILL: the timeout alone only reaches the wrapping shell, and a snippet that loops forever kept running as an orphan.
+      detached: process.platform !== "win32", killSignal: "SIGKILL",
     })
+    // The snippet and anything it started live in that session: nothing may outlive the probe.
+    if (process.platform !== "win32" && r.pid) { try { process.kill(-r.pid, "SIGKILL") } catch { /* already gone */ } }
     const timedOut = r.error?.code === "ETIMEDOUT" || r.signal === "SIGTERM"
     const out = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error && !timedOut ? r.error.message : ""}`.trim()
     return { ok: true, exitCode: r.error && !timedOut ? -1 : r.status, timedOut, output: out.slice(-TAIL) }

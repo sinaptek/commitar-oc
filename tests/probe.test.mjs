@@ -99,3 +99,21 @@ test("go probe: a package main snippet runs next to the project's library packag
   assert.match(r.output, /42/)
   assert.equal(existsSync(join(d, "probe_snippet")), false, "nothing written into the real project")
 })
+
+// A runaway snippet must die with the timeout: killing only the wrapping shell used to leave `node` spinning forever.
+const alive = (pid) => { try { process.kill(pid, 0); return true } catch { return false } }
+for (const [name, probe] of [["node as the shell's only command", "node {file}"], ["node followed by another command", "node {file}; true"]]) {
+  test(`timeout kills the whole process tree: ${name}`, () => {
+    const pidFile = join(tmpdir(), `probe-pid-${process.pid}-${probe.length}`)
+    const code = `import { writeFileSync } from "node:fs"\nwriteFileSync(${JSON.stringify(pidFile)}, String(process.pid))\nwhile (true) {}\n`
+    const r = runProbe({ cwd: proj({ probe, gates: { test: "true" } }), code, timeoutMs: 1500 })
+    assert.equal(r.timedOut, true)
+    const pid = Number(readFileSync(pidFile, "utf8"))
+    try {
+      spawnSync("sleep", ["0.3"])
+      assert.equal(alive(pid), false, `snippet process ${pid} is still running after the timeout`)
+    } finally {
+      if (alive(pid)) process.kill(pid, "SIGKILL")
+    }
+  })
+}
