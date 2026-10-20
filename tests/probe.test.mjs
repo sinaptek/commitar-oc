@@ -85,3 +85,17 @@ test("python probe: the project root is importable and the extension is .py", { 
   assert.match(r.output, /42/)
   assert.equal(existsSync(join(d, "shop/__pycache__")), false, "no bytecode written into the real project")
 })
+
+const GO = `${process.env.HOME}/go-sdk/go/bin`
+const hasGo = spawnSync("go", ["version"], { env: { ...process.env, PATH: `${GO}:${process.env.PATH}` } }).status === 0
+test("go probe: a package main snippet runs next to the project's library package", { skip: !hasGo }, () => {
+  const d = mkdtempSync(join(tmpdir(), "probe-"))
+  writeFileSync(join(d, "commitar.json"), JSON.stringify({ probe: `PATH=${GO}:$PATH go run {file}`, gates: { test: "true" } }))
+  writeFileSync(join(d, "go.mod"), "module example.com/m\n\ngo 1.22\n")
+  writeFileSync(join(d, "m.go"), "package m\n\nfunc Double(n int) int { return n * 2 }\n")
+  const code = 'package main\n\nimport (\n\t"fmt"\n\t"example.com/m"\n)\n\nfunc main() { fmt.Println(m.Double(21)) }\n'
+  const r = runProbe({ cwd: d, code })
+  assert.equal(r.exitCode, 0, r.output)
+  assert.match(r.output, /42/)
+  assert.equal(existsSync(join(d, "probe_snippet")), false, "nothing written into the real project")
+})

@@ -5,7 +5,7 @@ import { runProbe, summarizeProbe } from "../lib/probe-core.mjs"
 export default tool({
   description: "Run a short snippet with the project's own interpreter in a throwaway copy of the project, to see what an input really does. Nothing is kept; the real project is not touched.",
   args: {
-    code: tool.schema.string().describe("The snippet to run (JavaScript for node projects, Python for python projects). Print what you want to see."),
+    code: tool.schema.string().describe("The snippet to run (JavaScript for node projects, Python for python projects, a complete `package main` file for Go projects, which may import the project's own packages). Print what you want to see."),
   },
   async execute(args, context) {
     return summarizeProbe(runProbe({ cwd: context.directory, code: args.code }))
