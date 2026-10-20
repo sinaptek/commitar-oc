@@ -51,7 +51,7 @@ Statuses: **Met** (evidence given), **Partly** (what is missing is stated), **Op
 | D3 | Must | No secrets in the repo | Met | Scan of the 48 tracked files 2026-10-18: one fake key in a vault-redaction test fixture, nothing else; `.env` is ignored |
 | D4 | Must | README and `docs/opencode-schema.md` match what the code does | Met | Updated with each change |
 | D5 | Should | Works on Windows | Open | The design notes list Windows and MCP as the source of past trouble; only Linux was run |
-| D6 | Should | Works with runners beyond Node and Python | Partly | Jest (jest 30, CommonJS) and `go test` (Go 1.27.2) are classified and checked live; a full model run was made on a small Go project and a small Jest project (2026-10-20, RED from real assertion failures in both), with no transformer setups, and other languages are unverified |
+| D6 | Should | Works with runners beyond Node and Python | Partly | Jest (jest 30, CommonJS) and `go test` (Go 1.27.2) are classified and checked live; a full model run was made on a small Go project and a small Jest project (2026-10-20, RED from real assertion failures in both), a Go multi-package project and a ts-jest project were also run (Go build-failure RED accepted; ts-jest rejects a missing module, the tester loads it lazily), babel-jest, workspaces and other languages are unverified |
 
 ## Out of scope for v1
 A fallback or routing chain between models (Headroom is a context-compression proxy, not a router); claude-mem; a return
